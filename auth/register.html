@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Register</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/auth.css">
+  <style>
+    /* Interactive card styling */
+    .role-card {
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .role-card:hover {
+      border-color: var(--brand-bright-green);
+      background: var(--bg-soft-green);
+    }
+    .role-card.selected {
+      border-color: var(--brand-dark-green);
+      background: var(--bg-soft-green);
+    }
+    .step-section { display: none; }
+    .step-section.active { display: block; }
+  </style>
+</head>
+<body class="auth-layout">
+
+  <!-- TOP NAV -->
+  <header style="position: absolute; top: 0; left: 0; right: 0; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;">
+    <a href="../index.html" class="brand-logo" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+      <img src="../assets/images/logo.png" alt="FarmBid Logo" style="height: 28px;">
+    </a>
+    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+      Already have an account? <a href="login.html" style="font-weight: 600; color: var(--brand-dark-green); text-decoration: none;">Sign in</a>
+    </div>
+  </header>
+
+  <!-- MAIN REGISTRATION CONTAINER -->
+  <main style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px 20px;">
+    <div style="background: #ffffff; border-radius: var(--radius-lg); padding: 36px; width: 100%; max-width: 480px; box-shadow: var(--shadow-card);">
+      
+      <!-- STEP 1: SELECT ROLE -->
+      <div id="step1" class="step-section active">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div style="width: 36px; height: 36px; background: var(--bg-soft-green); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--brand-dark-green);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Step 1 of 2</span>
+        </div>
+
+        <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Register as</h1>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px;">Welcome to FarmBid. How would you like to join?</p>
+
+        <!-- Buyer Card -->
+        <div class="role-card" onclick="selectRole('bidder')">
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <div style="width: 40px; height: 40px; background: var(--bg-canvas); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--brand-dark-green);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Buyer</div>
+              <div style="font-size: 0.78rem; color: var(--text-secondary);">Discover farm products and place your bids.</div>
+            </div>
+          </div>
+          <span style="color: var(--brand-dark-green); font-weight: 700;">&rarr;</span>
+        </div>
+
+        <!-- Seller Card -->
+        <div class="role-card" onclick="selectRole('farmer')">
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <div style="width: 40px; height: 40px; background: var(--bg-canvas); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--brand-dark-green);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Seller</div>
+              <div style="font-size: 0.78rem; color: var(--text-secondary);">List your farm products and connect with buyers.</div>
+            </div>
+          </div>
+          <span style="color: var(--brand-dark-green); font-weight: 700;">&rarr;</span>
+        </div>
+
+        <div style="text-align: center; font-size: 0.78rem; color: var(--text-muted); margin-top: 16px;">
+          Choose an account type to continue registration.
+        </div>
+      </div>
+
+      <!-- STEP 2: REGISTRATION FORM -->
+      <div id="step2" class="step-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <button type="button" onclick="goBackToStep1()" style="background: none; border: none; font-size: 0.85rem; font-weight: 600; color: var(--brand-dark-green); cursor: pointer; padding: 0;">&larr; Back</button>
+          <span id="roleBadge" class="badge badge-green">BUYER</span>
+        </div>
+
+        <h1 style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Create your account</h1>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 20px;">Enter your personal details to complete registration.</p>
+
+        <form id="registerForm">
+          <input type="hidden" id="selectedRole" name="role" value="bidder">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label">First name</label>
+              <input type="text" id="firstName" class="form-control" required placeholder="Jose">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last name</label>
+              <input type="text" id="lastName" class="form-control" required placeholder="Dela Cruz">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email address</label>
+            <input type="email" id="email" class="form-control" required placeholder="jose@example.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contact number</label>
+            <input type="text" id="contactNumber" class="form-control" required placeholder="+63 912 345 6789">
+          </div>
+
+          <div class="form-group" id="addressGroup" style="display: none;">
+            <label class="form-label">Farm / Business Address</label>
+            <input type="text" id="address" class="form-control" placeholder="San Jose, Nueva Ecija">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="password" class="form-control" required placeholder="At least 6 characters">
+          </div>
+
+          <button type="submit" class="btn btn-bright-green" style="width: 100%; justify-content: center; padding: 12px; margin-top: 8px; background-color: var(--brand-dark-green); color: white;">Complete registration</button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    let chosenRole = 'bidder';
+
+    function selectRole(role) {
+      chosenRole = role;
+      document.getElementById('selectedRole').value = role;
+      
+      const badge = document.getElementById('roleBadge');
+      if (role === 'farmer') {
+        badge.textContent = 'SELLER / FARMER';
+        badge.style.backgroundColor = 'var(--bg-soft-green)';
+        badge.style.color = 'var(--brand-dark-green)';
+        document.getElementById('addressGroup').style.display = 'block';
+      } else {
+        badge.textContent = 'BUYER';
+        badge.style.backgroundColor = 'var(--bg-soft-green)';
+        badge.style.color = 'var(--brand-dark-green)';
+        document.getElementById('addressGroup').style.display = 'none';
+      }
+
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+    }
+
+    function goBackToStep1() {
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step1').classList.add('active');
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const email = document.getElementById('email').value;
+      const contactNumber = document.getElementById('contactNumber').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('selectedRole').value;
+      const address = document.getElementById('address').value;
+
+      try {
+        const response = await fetch('http://127.0.0.1:3000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ firstName, lastName, email, contactNumber, password, role, address })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert('Registration successful! Your account is currently waiting for admin approval before you can sign in.');
+          window.location.href = 'login.html';
+        } else {
+          alert('Registration failed: ' + (data.message || 'Please check your inputs.'));
+        }
+      } catch (error) {
+        console.error('Error connecting to backend:', error);
+        alert('Could not connect to the FarmBid server. Make sure your backend server is running on port 3000.');
+      }
+    });
+  </script>
+
+</body>
+</html>

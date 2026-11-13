@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GCash Secure Payment Gateway · FarmBid</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <style>
+    body { background: #f4f6f8; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .gateway-card { background: #fff; padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); text-align: center; }
+    .gcash-logo { color: #007dfe; font-weight: 800; font-size: 1.8rem; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .amount-display { font-size: 2.2rem; font-weight: 700; color: #111; margin: 16px 0; }
+    .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: left; margin-bottom: 24px; font-size: 0.88rem; color: #475569; }
+    .details-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .details-row:last-child { margin-bottom: 0; }
+    .btn-pay { background: #007dfe; color: white; border: none; width: 100%; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
+    .btn-pay:hover { background: #0063d1; }
+    .btn-cancel { background: transparent; color: #64748b; border: none; width: 100%; padding: 10px; font-weight: 600; cursor: pointer; }
+    .btn-cancel:hover { color: #1e293b; }
+  </style>
+</head>
+<body>
+
+  <div class="gateway-card">
+    <div class="gcash-logo">GCash</div>
+    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">EXPRESS CHECKOUT</div>
+    
+    <div class="amount-display" id="displayAmount">₱0.00</div>
+
+    <div class="details-box">
+      <div class="details-row"><span>Merchant:</span> <strong>FarmBid Marketplace</strong></div>
+      <div class="details-row"><span>Account No:</span> <strong id="displayGcash">09170000000</strong></div>
+      <div class="details-row"><span>Reference:</span> <strong>TXN-GCASH-TEST</strong></div>
+    </div>
+
+    <button id="simulatePayBtn" class="btn-pay">Pay with GCash MPIN</button>
+    <button id="cancelBtn" class="btn-cancel">Cancel Transaction</button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const buyerId = params.get('buyerId');
+    const amount = params.get('amount');
+    const gcashNumber = params.get('gcash');
+
+    if (amount) {
+      document.getElementById('displayAmount').textContent = `₱${Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+    }
+    if (gcashNumber) {
+      document.getElementById('displayGcash').textContent = gcashNumber;
+    }
+
+    document.getElementById('simulatePayBtn').addEventListener('click', async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:3000/api/buyer/simulate-credit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ buyerId, amount })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert('GCash Payment Successful! Redirecting back to FarmBid...');
+          window.location.href = `wallet.html?topup=success`;
+        } else {
+          alert('Payment processing failed.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server connection error.');
+      }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      window.location.href = 'wallet.html';
+    });
+  </script>
+</body>
+</html>

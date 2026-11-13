@@ -1,0 +1,283 @@
+/* ==========================================================================
+   AUTHENTICATION PAGES STYLING (assets/css/auth.css)
+   ========================================================================== */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-canvas);
+}
+
+/* Top Navigation Bar */
+.auth-topbar {
+  height: 68px;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+}
+
+.auth-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.btn-topbar-signin {
+  padding: 7px 16px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  color: var(--brand-dark-green);
+  font-weight: 600;
+  background: #ffffff;
+}
+
+.btn-topbar-signin:hover {
+  background-color: var(--bg-soft-green);
+}
+
+/* Centered Container */
+.auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-auth);
+  padding: 36px 34px;
+}
+
+/* Card Header Icons & Step Indicators */
+.auth-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.auth-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-soft-green);
+  color: var(--brand-dark-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-indicator {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.back-role-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+}
+
+.back-role-link:hover {
+  color: var(--text-primary);
+}
+
+.auth-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+/* Role Selection Cards (Step 1 of 2) */
+.role-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.role-option-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-md);
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+
+.role-option-card:hover {
+  border-color: var(--brand-dark-green);
+  background-color: #fafdfa;
+  transform: translateY(-1px);
+}
+
+.role-option-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.role-option-info h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.role-option-info p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.role-arrow {
+  color: var(--brand-dark-green);
+  font-weight: 600;
+}
+
+.role-helper-note {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Utility Row (Remember me / Forgot password) */
+.auth-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 20px;
+  font-size: 0.8rem;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--brand-dark-green);
+}
+
+.forgot-link {
+  font-weight: 600;
+  color: var(--brand-dark-green);
+}
+
+/* Terms Notice */
+.terms-notice {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin: 14px 0 18px;
+}
+
+.terms-notice a {
+  font-weight: 600;
+}
+
+/* Social Section (Only Google and Facebook kept per instructions) */
+.social-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-light);
+}
+
+.social-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  margin-bottom: 12px;
+}
+
+.social-header span:first-child {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.social-header span:last-child {
+  color: var(--text-muted);
+}
+
+.social-buttons-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-social {
+  flex: 1;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-social:hover {
+  background-color: var(--bg-canvas);
+  border-color: #9ca3af;
+}
+
+.auth-bottom-Switch {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.auth-bottom-Switch a {
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.hidden {
+  display: none !important;
+}

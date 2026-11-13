@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Admin Auction Details</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="disputes.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Active Disputes</span>
+      </a>
+      <a href="user-approvals.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users</span>
+      </a>
+      <a href="reports.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Auctions</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right">
+        <span class="role-badge" style="background-color: #fee2e2; color: #991b1b; font-weight: 700;">ADMIN</span>
+        <button class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <button class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+      </div>
+    </header>
+
+    <div class="dash-container">
+      <!-- Page Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">
+            Admin Oversight / <span id="breadcrumbAucCode">AUC-000</span>
+          </div>
+          <h1 id="listingTitle" class="page-title" style="font-size: 1.4rem;">Livestock Details</h1>
+          <p id="listingSubtitle" class="page-subtitle">Loading listing details...</p>
+        </div>
+        <a href="reports.html" class="btn btn-outline" style="font-size: 0.82rem; text-decoration: none;">&larr; Back to Auctions</a>
+      </div>
+
+      <!-- Main 2-Column Layout -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+        
+        <!-- Left Column: Photo Carousel & Specs -->
+        <div>
+          <!-- Photo Box & Carousel -->
+          <div id="mainPhotoBox" style="width: 100%; height: 380px; background: #e5e7eb; border-radius: var(--radius-lg); position: relative; overflow: hidden; background-size: cover; background-position: center; margin-bottom: 16px;">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Animal Information Card -->
+          <div class="dash-card" style="margin-bottom: 24px;">
+            <h2 class="dash-card-title" style="margin-bottom: 16px;">Animal Information</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.88rem;">
+              <div><strong style="color: var(--text-muted);">Breed:</strong> <span id="specBreed">-</span></div>
+              <div><strong style="color: var(--text-muted);">Sex:</strong> <span id="specSex">-</span></div>
+              <div><strong style="color: var(--text-muted);">Age:</strong> <span id="specAge">-</span></div>
+              <div><strong style="color: var(--text-muted);">Live weight:</strong> <span id="specWeight">-</span></div>
+            </div>
+          </div>
+
+          <!-- Compliance & Verification Documents -->
+          <div class="dash-card">
+            <h2 class="dash-card-title" style="margin-bottom: 8px;">Compliance & Verification Documents</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 16px;">Official vet health certificates and permits provided by the farmer.</p>
+            <div id="documentsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="font-size: 0.82rem; color: #666; font-style: italic;">Loading documents...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Status & Bid History -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          
+          <!-- Auction Status Card -->
+          <div class="dash-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span id="leadingBadge" class="badge badge-green">Live auction</span>
+              <span id="totalBidsCount" style="font-size: 0.78rem; color: var(--text-muted);">0 bids placed</span>
+            </div>
+            
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Current Highest Bid</div>
+            <div id="currentHighestBidDisplay" style="font-size: 2rem; font-weight: 800; color: var(--text-primary); margin-bottom: 16px;">₱0</div>
+
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Time Remaining</div>
+            <div id="auctionTimer" style="font-size: 1.3rem; font-weight: 700; color: #1e5631; margin-bottom: 4px;">00h : 00m : 00s</div>
+            <div id="closesDateSub" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">Closes · --</div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #166534;">
+              🛡️ You are viewing this auction in <strong>Admin Oversight Mode</strong>.
+            </div>
+          </div>
+
+          <!-- Live Bid History Card -->
+          <div class="dash-card">
+            <h2 class="dash-card-title" style="margin-bottom: 16px;">Live Bid History</h2>
+            <div id="bidHistoryList" style="display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto;">
+              <div style="color: #777; font-style: italic; text-align: center;">No bids placed yet.</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let auctionPhotos = [];
+    let currentPhotoIdx = 0;
+
+    function parseLocalDate(dateString) {
+      if (!dateString) return null;
+      const cleanStr = String(dateString).trim().replace('T', ' ');
+      const parts = cleanStr.split(' ');
+      const datePart = parts[0];
+      const timePart = parts[1] || '00:00:00';
+      if (!datePart) return null;
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hours, minutes, seconds] = timePart.split(':').map(Number);
+      if (!year || !month || !day) return null;
+      return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+      if (!user || user.role !== 'admin') {
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const listingId = params.get('id');
+      if (!listingId) {
+        alert('No auction specified.');
+        window.location.href = 'reports.html';
+        return;
+      }
+
+      try {
+        const [listingRes, bidsRes] = await Promise.all([
+          fetch('http://127.0.0.1:3000/api/listings'),
+          fetch(`http://127.0.0.1:3000/api/bids/listing/${listingId}`)
+        ]);
+
+        const listingResult = await listingRes.json();
+        const bidsResult = await bidsRes.json();
+
+        if (!listingRes.ok || !listingResult.success) {
+          alert('Failed to load listings.');
+          return;
+        }
+
+        const item = listingResult.data.find(l => String(l.listing_id) === String(listingId));
+        if (!item) {
+          alert('Listing not found.');
+          window.location.href = 'reports.html';
+          return;
+        }
+
+        const bids = (bidsRes.ok && bidsResult.success) ? bidsResult.data : [];
+        auctionPhotos = Array.isArray(item.images) && item.images.length > 0
+          ? item.images
+          : [item.image_url || 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55'];
+
+        const aucCode = `AUC-${String(item.listing_id).padStart(3, '0')}`;
+        document.getElementById('breadcrumbAucCode').textContent = aucCode;
+        document.getElementById('listingTitle').textContent = `${item.animal_type || 'Livestock'} — ${item.weight ? Number(item.weight) + ' kg' : ''}`;
+        document.getElementById('listingSubtitle').textContent = `${aucCode} · LV-${String(item.listing_id).padStart(3, '0')} · ${item.farmer_address || 'Farm location'}`;
+
+        document.getElementById('specBreed').textContent = item.breed || 'Not specified';
+        document.getElementById('specSex').textContent = item.sex || 'Not specified';
+        document.getElementById('specAge').textContent = item.age || 'Not specified';
+        document.getElementById('specWeight').textContent = item.weight ? `${Number(item.weight)} kg` : 'Not specified';
+
+        const currentHighest = Number(item.current_highest_bid || item.starting_price || 0);
+        document.getElementById('currentHighestBidDisplay').textContent = `₱${currentHighest.toLocaleString('en-PH')}`;
+        document.getElementById('totalBidsCount').textContent = `${bids.length} bid${bids.length === 1 ? '' : 's'} placed`;
+
+        // Populate Bid History
+        const bidHistoryList = document.getElementById('bidHistoryList');
+        if (bids.length === 0) {
+          bidHistoryList.innerHTML = `<div style="color: #777; font-style: italic; text-align: center;">No bids placed yet.</div>`;
+        } else {
+          bidHistoryList.innerHTML = bids.map(b => {
+            const bidDate = parseLocalDate(b.created_at) || new Date();
+            return `
+              <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border-light);">
+                <div>
+                  <div style="font-weight: 600;">${b.bidder_name || 'Buyer'}</div>
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">${bidDate.toLocaleString()}</div>
+                </div>
+                <div style="font-weight: 700;">₱${Number(b.bid_amount).toLocaleString('en-PH')}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Populate Documents
+        const docsContainer = document.getElementById('documentsContainer');
+        let docs = item.documents || [];
+        if (typeof docs === 'string') {
+          try { docs = JSON.parse(docs); } catch(e) { docs = [docs]; }
+        }
+
+        if (!Array.isArray(docs) || docs.length === 0) {
+          docsContainer.innerHTML = `<div style="font-size: 0.82rem; color: #666; font-style: italic;">No compliance documents uploaded.</div>`;
+        } else {
+          docsContainer.innerHTML = docs.map((docUrl, idx) => {
+            const fileName = String(docUrl).split('/').pop() || `Document_${idx + 1}`;
+            return `
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-canvas, #f9fafb); border: 1px solid var(--border-light, #e5e7eb); border-radius: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                  <span style="font-size: 1.1rem;">📄</span>
+                  <span style="font-size: 0.82rem; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px;" title="${fileName}">${fileName}</span>
+                </div>
+                <a href="${docUrl}" target="_blank" class="btn btn-outline" style="font-size: 0.75rem; padding: 5px 12px; text-decoration: none;">Open / View &rarr;</a>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Populate Main Photo Carousel
+        const photoBox = document.getElementById('mainPhotoBox');
+        if (photoBox) {
+          photoBox.style.backgroundImage = `url('${auctionPhotos[0]}')`;
+          photoBox.innerHTML = `
+            <img id="nativeMainPhoto" src="${auctionPhotos[0]}" alt="${item.animal_type}" style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--radius-lg);">
+            <div id="nativePhotoCounter" style="position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; z-index: 5;">📷 1 / ${auctionPhotos.length} photos</div>
+            ${auctionPhotos.length > 1 ? `
+              <button type="button" onclick="stepAuctionPhoto(-1)" style="position: absolute; top: 50%; left: 14px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 5;">&lsaquo;</button>
+              <button type="button" onclick="stepAuctionPhoto(1)" style="position: absolute; top: 50%; right: 14px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 5;">&rsaquo;</button>
+            ` : ''}
+          `;
+
+          if (auctionPhotos.length > 1) {
+            const thumbStrip = document.createElement('div');
+            thumbStrip.style.cssText = 'display: flex; gap: 10px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px;';
+            thumbStrip.innerHTML = auctionPhotos.map((src, idx) => `
+              <img src="${src}" id="native-thumb-${idx}" onclick="selectAuctionPhoto(${idx})" style="width: 80px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid ${idx === 0 ? '#1e5631' : 'transparent'}; opacity: ${idx === 0 ? '1' : '0.65'};">
+            `).join('');
+            photoBox.insertAdjacentElement('afterend', thumbStrip);
+          }
+        }
+
+        // Countdown Timer
+        const rawEndsAt = item.auction_ends_at;
+        const endsAtTimestamp = rawEndsAt ? parseLocalDate(rawEndsAt).getTime() : 0;
+        const timerDisplay = document.getElementById('auctionTimer');
+        const closesSubEl = document.getElementById('closesDateSub');
+        if (closesSubEl && rawEndsAt) {
+          closesSubEl.textContent = `Closes · ${parseLocalDate(rawEndsAt).toLocaleString()}`;
+        }
+
+        setInterval(() => {
+          const distance = endsAtTimestamp > 0 ? endsAtTimestamp - Date.now() : 0;
+          if (distance <= 0) {
+            if (timerDisplay) timerDisplay.textContent = '00h : 00m : 00s (Closed)';
+          } else {
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((distance % (1000 * 60)) / 1000);
+            if (timerDisplay) timerDisplay.textContent = `${String(h).padStart(2, '0')}h : ${String(m).padStart(2, '0')}m : ${String(s).padStart(2, '0')}s`;
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error('Error loading admin auction details:', err);
+      }
+    });
+
+    window.stepAuctionPhoto = function(dir) {
+      if (!auctionPhotos.length) return;
+      currentPhotoIdx = (currentPhotoIdx + dir + auctionPhotos.length) % auctionPhotos.length;
+      selectAuctionPhoto(currentPhotoIdx);
+    };
+
+    window.selectAuctionPhoto = function(idx) {
+      currentPhotoIdx = idx;
+      const mainImg = document.getElementById('nativeMainPhoto');
+      const counter = document.getElementById('nativePhotoCounter');
+      if (mainImg) mainImg.src = auctionPhotos[idx];
+      if (counter) counter.textContent = `📷 ${idx + 1} / ${auctionPhotos.length} photos`;
+
+      auctionPhotos.forEach((_, i) => {
+        const thumb = document.getElementById(`native-thumb-${i}`);
+        if (thumb) {
+          thumb.style.borderColor = i === idx ? '#1e5631' : 'transparent';
+          thumb.style.opacity = i === idx ? '1' : '0.65';
+        }
+      });
+    };
+  </script>
+</body>
+</html>

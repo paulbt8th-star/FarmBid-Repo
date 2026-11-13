@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Admin Marketplace Operations</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="disputes.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Active Disputes</span>
+      </a>
+      <a href="user-approvals.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Users</span>
+      </a>
+      <a href="reports.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Auctions</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right" style="position: relative;">
+        <span class="role-badge" style="background-color: #fee2e2; color: #991b1b;">ADMIN</span>
+        
+        <!-- Notifications Bell Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notifBadge" style="position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none;"></span>
+          </button>
+
+          <!-- Notification Dropdown Menu Box -->
+          <div id="notificationDropdown" style="display: none; position: absolute; right: 0; top: 40px; width: 320px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+              <span style="font-weight: 700; font-size: 0.9rem; color: #111;">Notifications</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Real-time</span>
+            </div>
+            <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 0.82rem; color: #444;">
+              <div style="padding: 10px; text-align: center; color: #777; font-style: italic;">No new notifications</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Avatar Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="profileDropdownBtn" class="icon-btn" aria-label="Profile" style="cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+
+          <div id="profileDropdownMenu" style="display: none; position: absolute; right: 0; top: 40px; width: 240px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 12px;">
+            <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div id="dropdownUserName" style="font-weight: 700; font-size: 0.88rem; color: #111;">Admin User</div>
+              <div id="dropdownUserEmail" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">admin@gmail.com</div>
+            </div>
+            <a href="settings.html" style="display: block; padding: 8px 10px; font-size: 0.82rem; color: #333; text-decoration: none; border-radius: 4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">Account Settings</a>
+            <button id="logoutBtn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-size: 0.82rem; color: #dc2626; font-weight: 600; cursor: pointer; border-radius: 4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">Log out</button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <div class="dash-container">
+      
+      <div class="page-header-row">
+        <div>
+          <h1 class="page-title">Marketplace operations</h1>
+          <p class="page-subtitle">Monitor bidding activity, disputes and new user registration across FarmBid.</p>
+        </div>
+        <div class="date-pill">
+          <span id="currentDateDisplay">Sep 26, 2026</span>
+        </div>
+      </div>
+
+      <!-- 4 Top Metric Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Active disputes</span>
+            <div class="metric-icon-box" style="background: var(--bg-soft-red); color: var(--status-red-text);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricDisputesVal">0</div>
+          <div class="metric-subtext" style="color: var(--status-red-text); font-weight: 600;" id="metricDisputesSub">0 open reports</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Total bids</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.2 1.2L3 12l5.8 1.9a2 2 0 0 1 1.2 1.2L12 21l1.9-5.8a2 2 0 0 1 1.2-1.2L21 12l-5.8-1.9a2 2 0 0 1-1.2-1.2Z"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricBidsVal">0</div>
+          <div class="metric-subtext">Recorded in database</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">User registrations</span>
+            <div class="metric-icon-box" style="background: var(--bg-soft-amber); color: var(--status-amber-text);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricUsersVal">0</div>
+          <div class="metric-subtext" style="color: var(--status-amber-text);" id="metricUsersSub">Total accounts</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Top sales category</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+          </div>
+          <div class="metric-value" id="metricTopCatVal">None</div>
+          <div class="metric-subtext" id="metricTopCatSub">0 transactions</div>
+        </div>
+      </div>
+
+      <!-- 2 Column Layout: Bidding Ranking & Active Dispute Queue -->
+      <div class="dashboard-grid-2col">
+        
+        <!-- Bidding Ranking -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <h2 class="dash-card-title">Bidding Ranking</h2>
+              <p class="dash-card-subtitle">Profiles ranked by total bid activity.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Bidder Name</th>
+                  <th style="text-align: right;">Total Bid Amount</th>
+                </tr>
+              </thead>
+              <tbody id="biddingRankingTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Active Dispute Queue -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div>
+              <h2 class="dash-card-title">Active Dispute Queue</h2>
+              <p class="dash-card-subtitle">Reports awaiting marketplace operations review.</p>
+            </div>
+            <span class="badge badge-red">Live queue</span>
+          </div>
+
+          <div style="font-size: 0.78rem; font-weight: 600; color: var(--status-red-text); margin-bottom: 12px;" id="disputeQueueCount">🚨 0 reports in queue</div>
+
+          <div class="table-responsive">
+            <table class="data-table" style="font-size: 0.8rem;">
+              <thead>
+                <tr>
+                  <th>Report ID</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="disputeTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top: 16px;">
+            <a href="disputes.html" class="btn btn-dark-green" style="width: 100%; justify-content: center; font-size: 0.8rem; background-color: var(--brand-dark-green); text-decoration: none;">View Dispute List</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom 2 Column: Top Sales & Registration Backlog -->
+      <div class="dashboard-grid-2col" style="margin-top: 24px;">
+        
+        <!-- Top Sales of the Month -->
+        <div class="dash-card" style="margin-bottom: 0;">
+          <div class="dash-card-header">
+            <div>
+              <h2 class="dash-card-title">Top Sales of the Month</h2>
+              <p class="dash-card-subtitle">Completed sales by livestock category.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Livestock</th>
+                  <th style="text-align: right;">Listings / Count</th>
+                </tr>
+              </thead>
+              <tbody id="topSalesTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- User Registration Backlog -->
+        <div class="dash-card" style="margin-bottom: 0;">
+          <div class="dash-card-header">
+            <div>
+              <h2 class="dash-card-title">User Registration Backlog</h2>
+              <p class="dash-card-subtitle">New profiles pending compliance verification.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" style="font-size: 0.82rem;">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th style="text-align: right;">Role</th>
+                </tr>
+              </thead>
+              <tbody id="userBacklogTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top: 16px;">
+            <a href="user-approvals.html" class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.8rem; text-decoration: none;">Review registration list &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'admin') {
+      window.location.href = '../auth/login.html';
+      return;
+    }
+
+    if (user) {
+      const nameEl = document.getElementById('dropdownUserName');
+      const emailEl = document.getElementById('dropdownUserEmail');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Admin'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+    }
+
+    // Toggle Notification & Profile Dropdowns & Handle Red Dot Clearance
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+    const notifBadge = document.getElementById('notifBadge');
+    const notifList = document.getElementById('notificationList');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (profileMenu) profileMenu.style.display = 'none';
+        
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_admin_notifications_read', 'true');
+        }
+      });
+
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (notifDropdown) notifDropdown.style.display = 'none';
+        profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
+      });
+
+      profileMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (notifDropdown) notifDropdown.style.display = 'none';
+      if (profileMenu) profileMenu.style.display = 'none';
+    });
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '../auth/login.html';
+      });
+    }
+
+    // Fetch Admin Notifications
+    try {
+      const resNotif = await fetch('http://127.0.0.1:3000/api/admin/notifications');
+      const notifResult = await resNotif.json();
+      const isRead = localStorage.getItem('farmbid_admin_notifications_read') === 'true';
+
+      if (resNotif.ok && notifResult.success) {
+        const notifs = notifResult.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
+          if (notifList) {
+            notifList.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching admin notifications:', err);
+    }
+
+    // Set Date Display
+    const dateEl = document.getElementById('currentDateDisplay');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    try {
+      const res = await fetch('http://127.0.0.1:3000/api/dashboard/admin');
+      const result = await res.json();
+
+      if (!res.ok || !result.success) throw new Error(result.message);
+
+      const { disputes, users, bids, sales_categories } = result.data;
+
+      // 1. Metric Cards Updates
+      document.getElementById('metricDisputesVal').textContent = disputes.length;
+      document.getElementById('metricDisputesSub').textContent = `${disputes.length} open reports`;
+
+      document.getElementById('metricBidsVal').textContent = bids.length;
+      document.getElementById('metricUsersVal').textContent = users.length;
+      document.getElementById('metricUsersSub').textContent = `${users.filter(u => u.role === 'farmer').length} farmers · ${users.filter(u => u.role === 'bidder').length} bidders`;
+
+      if (sales_categories.length > 0) {
+        document.getElementById('metricTopCatVal').textContent = sales_categories[0].animal_type || 'General';
+        document.getElementById('metricTopCatSub').textContent = `${sales_categories[0].count} listings`;
+      }
+
+      // 2. Bidding Ranking Table (with empty-state notice)
+      const rankingBody = document.getElementById('biddingRankingTableBody');
+      if (rankingBody) {
+        if (!bids || bids.length === 0) {
+          rankingBody.innerHTML = `
+            <tr>
+              <td colspan="2" style="text-align: center; color: #666; padding: 24px; font-style: italic;">
+                No bidding ranking data available to project at the moment.
+              </td>
+            </tr>`;
+        } else {
+          rankingBody.innerHTML = bids.slice(0, 5).map(b => `
+            <tr>
+              <td style="font-weight: 600;">${b.first_name ? `${b.first_name} ${b.last_name}` : `Bidder #${b.bidder_id}`}</td>
+              <td style="text-align: right; font-family: monospace; font-weight: 700;">₱${Number(b.bid_amount).toLocaleString('en-PH')}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // 3. Active Dispute Queue Table (with empty-state notice)
+      const disputeBody = document.getElementById('disputeTableBody');
+      const disputeCountEl = document.getElementById('disputeQueueCount');
+      if (disputeCountEl) disputeCountEl.textContent = ` ${disputes.length} reports in queue`;
+
+      if (disputeBody) {
+        if (!disputes || disputes.length === 0) {
+          disputeBody.innerHTML = `
+            <tr>
+              <td colspan="3" style="text-align: center; color: #666; padding: 20px; font-style: italic;">
+                No active dispute reports to project.
+              </td>
+            </tr>`;
+        } else {
+          disputeBody.innerHTML = disputes.map(d => `
+            <tr>
+              <td style="font-family: monospace;">#${String(d.dispute_id).padStart(4, '0')}</td>
+              <td>${d.reason || d.description || 'Dispute report'}</td>
+              <td style="text-align: right;"><span class="badge badge-red">${d.status || 'Open'}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // 4. Top Sales Table (with empty-state notice)
+      const salesBody = document.getElementById('topSalesTableBody');
+      if (salesBody) {
+        if (!sales_categories || sales_categories.length === 0) {
+          salesBody.innerHTML = `
+            <tr>
+              <td colspan="2" style="text-align: center; color: #666; padding: 24px; font-style: italic;">
+                No sales category data available to project.
+              </td>
+            </tr>`;
+        } else {
+          salesBody.innerHTML = sales_categories.map(cat => `
+            <tr>
+              <td style="font-weight: 600;">${cat.animal_type || 'Livestock'}</td>
+              <td style="text-align: right; font-weight: 700; color: var(--brand-dark-green);">${cat.count}x</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      // 5. User Registration Backlog Table (with empty-state notice)
+      const backlogBody = document.getElementById('userBacklogTableBody');
+      if (backlogBody) {
+        if (!users || users.length === 0) {
+          backlogBody.innerHTML = `
+            <tr>
+              <td colspan="2" style="text-align: center; color: #666; padding: 24px; font-style: italic;">
+                No user registration backlog to project.
+              </td>
+            </tr>`;
+          } else {
+          backlogBody.innerHTML = users.slice(0, 5).map(u => `
+            <tr>
+              <td>${u.first_name ? `${u.first_name} ${u.last_name}` : u.email}</td>
+              <td style="text-align: right;"><span class="badge ${u.role === 'farmer' ? 'badge-green' : 'badge-blue'}">${u.role || 'User'}</span></td>
+            </tr>
+          `).join('');
+        }
+      }
+
+    } catch (err) {
+      console.error('Error loading admin dashboard data:', err);
+    }
+  });
+</script>
+</body>
+</html>

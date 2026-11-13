@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Wallet & Finances</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="marketplace.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span>Browse Auctions</span>
+      </a>
+      <a href="my-purchases.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <span>My Bids</span>
+      </a>
+      <a href="wallet.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 12h2v4h-2z"/><path d="M2 10h20"/></svg>
+        <span>Wallet</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right" style="position: relative;">
+        <span class="role-badge">BUYER</span>
+        
+        <!-- Notifications Bell Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notifBadge" style="position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none;"></span>
+          </button>
+
+          <!-- Notification Dropdown Menu Box -->
+          <div id="notificationDropdown" style="display: none; position: absolute; right: 0; top: 40px; width: 320px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+              <span style="font-weight: 700; font-size: 0.9rem; color: #111;">Notifications</span>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Real-time</span>
+            </div>
+            <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 0.82rem; color: #444;">
+              <div style="padding: 10px; text-align: center; color: #777; font-style: italic;">No new notifications</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Avatar Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="profileDropdownBtn" class="icon-btn" aria-label="Profile" style="cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+          <div id="profileDropdownMenu" style="display: none; position: absolute; right: 0; top: 40px; width: 240px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 12px;">
+            <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div id="dropdownUserName" style="font-weight: 700; font-size: 0.88rem; color: #111;">Buyer User</div>
+              <div id="dropdownUserEmail" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">buyer@gmail.com</div>
+            </div>
+            <a href="settings.html" style="display: block; padding: 8px 10px; font-size: 0.82rem; color: #333; text-decoration: none; border-radius: 4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">Account Settings</a>
+            <button id="logoutBtn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-size: 0.82rem; color: #dc2626; font-weight: 600; cursor: pointer; border-radius: 4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">Log out</button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <div class="dash-container">
+      
+      <div class="page-header-row">
+        <div>
+          <h1 class="page-title">Wallet</h1>
+          <p class="page-subtitle">Know what's available, what's reserved and where every peso goes via GCash.</p>
+        </div>
+        <button id="openTopUpModalBtn" class="btn btn-bright-green" style="width: auto; padding: 10px 20px; cursor: pointer;">+ Top up via GCash</button>
+      </div>
+
+      <!-- Main Wallet Overview Card -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+        
+        <!-- Left Box: Total Balance -->
+        <div style="background: var(--brand-dark-green); color: #ffffff; border-radius: var(--radius-lg); padding: 30px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-card);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <span style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; opacity: 0.9;">Total wallet balance</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" opacity="0.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 12h2v4h-2z"/><path d="M2 10h20"/></svg>
+            </div>
+            <div id="totalWalletBalance" style="font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px;">₱0.00</div>
+            <div id="walletUserNameDisplay" style="font-size: 0.85rem; opacity: 0.85;">Loading user...</div>
+          </div>
+
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.15); font-size: 0.8rem; opacity: 0.9;">
+            ✓ Verified GCash account linked
+          </div>
+        </div>
+
+        <!-- Right Box: Bidding Power Breakdown -->
+        <div class="dash-card" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h2 class="dash-card-title" style="margin-bottom: 4px;">Your bidding power</h2>
+            <p class="dash-card-subtitle" style="margin-bottom: 20px;">Reserved funds remain in your balance across active bids.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+              <div style="background: var(--bg-canvas); padding: 12px; border-radius: var(--radius-sm);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Available funds</div>
+                <div id="availableFundsDisplay" style="font-size: 1.2rem; font-weight: 700; color: var(--brand-dark-green); margin-top: 2px;">₱0.00</div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">Ready for new bids</div>
+              </div>
+              <div style="background: var(--bg-canvas); padding: 12px; border-radius: var(--radius-sm);">
+                <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Committed</div>
+                <div id="committedFundsDisplay" style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">₱0.00</div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">To active bids</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Reserved Funds & Active Bids Table -->
+      <div class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-header">
+          <div>
+            <h2 class="dash-card-title">Reserved funds & active bids</h2>
+            <p class="dash-card-subtitle">Funds currently tied to your active live bids.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Auction / Livestock</th>
+                <th>Reserved Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="reservedBidsTableBody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No active bids found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Transaction History Table -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <h2 class="dash-card-title">Transaction history</h2>
+            <p class="dash-card-subtitle">Posted transactions change your wallet balance. Holds only change availability.</p>
+          </div>
+          <a href="#" style="font-size: 0.8rem; font-weight: 600;">Download statement &downarrow;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Transaction / Reference</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th style="text-align: right;">Wallet Balance</th>
+              </tr>
+            </thead>
+            <tbody id="transactionHistoryTableBody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No transactions found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- GCASH TOP-UP MODAL -->
+  <div id="topUpModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: var(--shadow-card);">
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 4px;">Top up via GCash</h2>
+      <p style="font-size: 0.82rem; color: #666; margin-bottom: 20px;">Fund your FarmBid wallet instantly through your GCash mobile number.</p>
+      
+      <form id="topUpForm">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">GCash Mobile Number</label>
+          <input type="text" id="topUpGcashInput" class="form-control" placeholder="09171234567" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" maxlength="11">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">Top-up Amount (₱)</label>
+          <input type="number" id="topUpAmountInput" class="form-control" placeholder="10000" step="1" min="100" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn btn-dark-green" style="flex: 1; justify-content: center; background-color: var(--brand-dark-green); cursor: pointer;">Confirm GCash payment</button>
+          <button type="button" id="closeTopUpModalBtn" class="btn btn-outline" style="flex: 1; justify-content: center; cursor: pointer;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') {
+      window.location.href = '../auth/login.html';
+      return;
+    }
+
+    if (user) {
+      const nameEl = document.getElementById('dropdownUserName');
+      const emailEl = document.getElementById('dropdownUserEmail');
+      const nameDisplay = document.getElementById('walletUserNameDisplay');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+      if (nameDisplay) nameDisplay.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''} · Philippine peso (PHP)`;
+    }
+
+    const bidderId = user.user_id || user.id || user.userId;
+
+    // Top-up Modal Toggle
+    const topUpModal = document.getElementById('topUpModal');
+    const openTopUpBtn = document.getElementById('openTopUpModalBtn');
+    const closeTopUpBtn = document.getElementById('closeTopUpModalBtn');
+    const topUpForm = document.getElementById('topUpForm');
+
+    if (openTopUpBtn && topUpModal) openTopUpBtn.addEventListener('click', () => { topUpModal.style.display = 'flex'; });
+    if (closeTopUpBtn && topUpModal) closeTopUpBtn.addEventListener('click', () => { topUpModal.style.display = 'none'; });
+
+    if (topUpForm) {
+      topUpForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = document.getElementById('topUpAmountInput').value;
+        const gcashNumber = document.getElementById('topUpGcashInput').value;
+
+        try {
+          const res = await fetch('http://127.0.0.1:3000/api/buyer/topup-gcash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ buyerId: bidderId, amount, gcashNumber })
+          });
+          const result = await res.json();
+          if (result.success && result.invoice_url) {
+            window.location.href = result.invoice_url;
+          } else {
+            alert(result.message || 'Top-up initialization failed.');
+          }
+        } catch (err) {
+          console.error('Top-up error:', err);
+          alert('Server connection error.');
+        }
+      });
+    }
+
+    try {
+      const [walletRes, txnRes] = await Promise.all([
+        fetch(`http://127.0.0.1:3000/api/buyer/wallet/${bidderId}`),
+        fetch(`http://127.0.0.1:3000/api/buyer/transactions/${bidderId}`)
+      ]);
+
+      const walletResult = await walletRes.json();
+      const txnResult = await txnRes.json();
+
+      if (walletRes.ok && walletResult.success) {
+        const data = walletResult.data;
+        
+        const totalBalEl = document.getElementById('totalWalletBalance');
+        const availFundsEl = document.getElementById('availableFundsDisplay');
+        const commFundsEl = document.getElementById('committedFundsDisplay');
+        
+        if (totalBalEl) totalBalEl.textContent = `₱${Number(data.wallet_balance || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (availFundsEl) availFundsEl.textContent = `₱${Number(data.available_funds || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+        if (commFundsEl) commFundsEl.textContent = `₱${Number(data.committed_funds || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
+
+        // Render ONLY active live bids in the Reserved Funds table (Filtering out closed/completed ones)
+        const reservedTableBody = document.getElementById('reservedBidsTableBody');
+        const activeBids = (data.bids || []).filter(b => {
+          const status = String(b.auction_status || '').toLowerCase();
+          return !['ended', 'closed', 'completed'].includes(status);
+        });
+
+        if (reservedTableBody) {
+          if (activeBids.length === 0) {
+            reservedTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No active bids found. All your auctions have ended!</td></tr>`;
+          } else {
+            reservedTableBody.innerHTML = activeBids.map(b => `
+              <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 12px 10px; font-weight: 600;">${b.animal_type || 'Livestock'} <br><span style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(b.listing_id).padStart(3, '0')}</span></td>
+                <td style="padding: 12px 10px; font-weight: 700;">₱${Number(b.bid_amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 12px 10px;"><span class="badge badge-amber">Active Hold</span></td>
+              </tr>
+            `).join('');
+          }
+        }
+      }
+
+      // Render Transaction History Table
+      const txnTableBody = document.getElementById('transactionHistoryTableBody');
+      if (txnTableBody && txnRes.ok && txnResult.success) {
+        const txns = txnResult.data || [];
+        if (txns.length === 0) {
+          txnTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No transactions found.</td></tr>`;
+        } else {
+          txnTableBody.innerHTML = txns.map(t => `
+            <tr style="border-bottom: 1px solid var(--border-light);">
+              <td style="padding: 12px 10px; color: var(--text-muted);">${t.created_at}</td>
+              <td style="padding: 12px 10px; font-weight: 600;">${t.description}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${t.reference_code}</span></td>
+              <td style="padding: 12px 10px; font-weight: 700; color: #dc2626;">-₱${Number(t.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+              <td style="padding: 12px 10px;"><span class="badge badge-green">${t.status}</span></td>
+              <td style="padding: 12px 10px; font-weight: 600; text-align: right;">₱${Number(t.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+            </tr>
+          `).join('');
+        }
+      }
+
+    } catch (err) {
+      console.error('Error loading buyer wallet data:', err);
+    }
+  });
+
+  // Global Notification Bell & Dropdown Initializer with Red Dot Clearance
+  async function initBuyerNotifications() {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') return;
+    const bidderId = user.user_id || user.id || user.userId;
+
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const notifList = document.getElementById('notificationList');
+    const notifBadge = document.getElementById('notifBadge');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_notifications_read', 'true');
+        }
+      });
+
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        notifDropdown.style.display = 'none';
+      });
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const result = await res.json();
+      const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
+
+      if (res.ok && result.success) {
+        const notifs = result.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
+          if (notifList) {
+            notifList.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }
+
+  initBuyerNotifications();
+</script>
+</body>
+</html>

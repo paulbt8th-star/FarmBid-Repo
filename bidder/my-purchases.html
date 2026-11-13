@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · My Bids & Purchases</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+
+<body class="dashboard-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="marketplace.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+        <span>Browse Auctions</span>
+      </a>
+      <a href="my-purchases.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        </svg>
+        <span>My Bids</span>
+      </a>
+      <a href="wallet.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M12 12h2v4h-2z" />
+          <path d="M2 10h20" />
+        </svg>
+        <span>Wallet</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right" style="position: relative;">
+        <span class="role-badge">BUYER</span>
+        
+      <!-- Notifications Bell Button with Dropdown -->
+      <div style="position: relative; display: inline-block;">
+        <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notifBadge" style="position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none;"></span>
+        </button>
+
+        <!-- Dropdown Menu Box -->
+        <div id="notificationDropdown" style="display: none; position: absolute; right: 0; top: 40px; width: 320px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+            <span style="font-weight: 700; font-size: 0.9rem; color: #111;">Notifications</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Real-time</span>
+          </div>
+          <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 0.82rem; color: #444;">
+            <div style="padding: 10px; text-align: center; color: #777; font-style: italic;">No new notifications</div>
+          </div>
+        </div>
+      </div>
+
+        <!-- User Profile Avatar Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="profileDropdownBtn" class="icon-btn" aria-label="Profile" style="cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+          <div id="profileDropdownMenu" style="display: none; position: absolute; right: 0; top: 40px; width: 240px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 12px;">
+            <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div id="dropdownUserName" style="font-weight: 700; font-size: 0.88rem; color: #111;">Buyer User</div>
+              <div id="dropdownUserEmail" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">buyer@gmail.com</div>
+            </div>
+            <a href="settings.html" style="display: block; padding: 8px 10px; font-size: 0.82rem; color: #333; text-decoration: none; border-radius: 4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">Account Settings</a>
+            <button id="logoutBtn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-size: 0.82rem; color: #dc2626; font-weight: 600; cursor: pointer; border-radius: 4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">Log out</button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <div class="dash-container">
+
+      <div class="page-header-row">
+        <div>
+          <h1 class="page-title">My Bids</h1>
+          <p class="page-subtitle">Track your position, receive your livestock and manage every winning bid.</p>
+        </div>
+        <div class="date-pill">
+          <span>Sep 26, 2026</span>
+        </div>
+      </div>
+
+      <!-- 4 Top Metric Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Live bids</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="m12 3-1.9 5.8a2 2 0 0 1-1.2 1.2L3 12l5.8 1.9a2 2 0 0 1 1.2 1.2L12 21l1.9-5.8a2 2 0 0 1 1.2-1.2L21 12l-5.8-1.9a2 2 0 0 1-1.2-1.2Z" />
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value">3</div>
+          <div class="metric-subtext">2 leading · 1 outbid</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Pending receivable</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value">0</div>
+          <div class="metric-subtext" style="color: var(--text-muted);">No pending deliveries</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Won bidding</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value">0</div>
+          <div class="metric-subtext">No completed wins</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-top">
+            <span class="metric-card-title">Committed funds</span>
+            <div class="metric-icon-box">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+          </div>
+          <div class="metric-value">₱0</div>
+          <div class="metric-subtext">Across your active bids</div>
+        </div>
+      </div>
+
+      <!-- Bid History & Auction Outcomes Card Section -->
+      <div class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-header" style="margin-bottom: 16px;">
+          <div>
+            <h2 class="dash-card-title">Bid History & Auction Outcomes</h2>
+            <p class="dash-card-subtitle">Track your live positions, historical bids, and settlement obligations for completed wins.</p>
+          </div>
+          <span class="badge badge-green">Real-time sync</span>
+        </div>
+
+        <!-- Dynamic Bid History Grid Container with Explicit ID -->
+        <div id="bidHistoryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+          <div style="color: #666; font-style: italic; padding: 20px; text-align: center; grid-column: 1 / -1;">Loading bid history...</div>
+        </div>
+      </div>
+
+      <!-- Pending Receivable Section -->
+      <div class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h2 class="dash-card-title" style="font-size: 1.1rem;">Pending Receivable</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">Confirm only after your livestock arrives and you have checked the documents.</p>
+          </div>
+          <span id="pendingCountBadge" class="badge badge-amber">0 awaiting receipt</span>
+        </div>
+        <div id="pendingReceivableGrid">
+          <!-- Populated dynamically with empty state support -->
+        </div>
+      </div>
+
+      <!-- Won Bidding Section -->
+      <div class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h2 class="dash-card-title" style="font-size: 1.1rem;">Won Bidding</h2>
+            <p style="font-size: 0.78rem; color: var(--text-muted);">Your winning amounts, payments and completed purchases.</p>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+                <th style="padding: 10px;">Livestock / Auction</th>
+                <th style="padding: 10px;">Won On</th>
+                <th style="padding: 10px;">Winning Bid</th>
+                <th style="padding: 10px;">Status</th>
+                <th style="padding: 10px; text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="wonBiddingTableBody">
+              <!-- Populated dynamically with empty state support -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+ <script>
+  async function confirmReceipt(listingId) {
+    if (!confirm('Are you sure you want to confirm receipt of this livestock? This will release funds to the farmer.')) return;
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    const bidderId = user ? (user.user_id || user.id || user.userId) : null;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:3000/api/buyer/confirm-receipt/${listingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bidderId })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert(result.message);
+        window.location.reload();
+      } else {
+        alert(result.message || 'Failed to confirm receipt.');
+      }
+    } catch (err) {
+      console.error('Confirm receipt error:', err);
+      alert('Server connection error.');
+    }
+  }
+
+  function parseLocalDate(dateString) {
+    if (!dateString) return null;
+    const cleanStr = String(dateString).trim().replace('T', ' ');
+    const parts = cleanStr.split(' ');
+    const datePart = parts[0];
+    const timePart = parts[1] || '00:00:00';
+    if (!datePart) return null;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') {
+      window.location.href = '../auth/login.html';
+      return;
+    }
+
+    if (user) {
+      const nameEl = document.getElementById('dropdownUserName');
+      const emailEl = document.getElementById('dropdownUserEmail');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+    }
+
+    const bidderId = user.user_id || user.id || user.userId;
+    const liveGrid = document.getElementById('bidHistoryGrid') || document.getElementById('liveBidsGrid');
+
+    try {
+      const [bidsRes, walletRes] = await Promise.all([
+        fetch(`http://127.0.0.1:3000/api/bids/bidder/${bidderId}`),
+        fetch(`http://127.0.0.1:3000/api/buyer/wallet/${bidderId}`)
+      ]);
+
+      const result = await bidsRes.json();
+      const walletResult = await walletRes.json();
+      const bids = (result && result.success && result.data) ? result.data : [];
+      
+      const now = new Date();
+
+      const listingsMap = {};
+      bids.forEach(b => {
+        if (!listingsMap[b.listing_id]) {
+          listingsMap[b.listing_id] = { ...b, userBids: [] };
+        }
+        listingsMap[b.listing_id].userBids.push(b);
+      });
+
+      const uniqueListings = Object.values(listingsMap).map(item => {
+        item.userBids.sort((x, y) => Number(y.bid_amount) - Number(x.bid_amount));
+        const highestUserBid = Number(item.userBids[0].bid_amount);
+        
+        const rawStatus = String(item.auction_status || 'live').toLowerCase();
+        const endsAt = parseLocalDate(item.auction_ends_at);
+        const isExpired = endsAt ? now > endsAt : false;
+        const isClosed = isExpired || ['ended', 'closed', 'completed'].includes(rawStatus);
+        const currentHighest = Number(item.current_highest_bid || item.starting_price || 0);
+        const isWinning = isClosed && (highestUserBid >= currentHighest);
+
+        return {
+          ...item,
+          highestUserBid,
+          totalUserBidsCount: item.userBids.length,
+          isClosed,
+          isWinning,
+          currentHighest
+        };
+      });
+
+      const totalCommitted = (walletResult.success && walletResult.data) ? Number(walletResult.data.committed_funds || 0) : 0;
+
+      const activeLiveBidsCount = uniqueListings.filter(l => !l.isClosed).length;
+      const pendingItems = uniqueListings.filter(l => l.isClosed && l.isWinning && String(l.auction_status || '').toLowerCase() !== 'completed');
+      const wonItems = uniqueListings.filter(l => l.isClosed && l.isWinning);
+
+      const metricValues = document.querySelectorAll('.metric-value');
+      if (metricValues.length >= 4) {
+        metricValues[0].textContent = activeLiveBidsCount; 
+        metricValues[1].textContent = pendingItems.length; 
+        metricValues[2].textContent = wonItems.length; 
+        metricValues[3].textContent = `₱${totalCommitted.toLocaleString('en-PH')}`; 
+      }
+
+      // Render Consolidated Bid History Cards Grid Safely
+      if (liveGrid) {
+        if (uniqueListings.length === 0) {
+          liveGrid.innerHTML = `
+            <div style="padding: 24px; text-align: center; color: #666; background: #fafafa; border-radius: 8px; border: 1px dashed #eaeaea; grid-column: 1 / -1;">
+              <p style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 0.9rem;">No bid history to project</p>
+              <p style="color: #777; font-size: 0.8rem; margin-bottom: 12px;">Your active and historical bids will appear here.</p>
+              <a href="marketplace.html" class="btn btn-dark-green" style="font-size: 0.78rem; text-decoration: none; padding: 6px 14px; display: inline-block;">Browse Marketplace</a>
+            </div>
+          `;
+        } else {
+          liveGrid.innerHTML = uniqueListings.map(listing => {
+            const aucCode = `AUC-${String(listing.listing_id || 1).padStart(3, '0')}`;
+
+            let statusBadge = `<span style="background: #e8f5e9; color: #1e5631; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;">Active Live Bid</span>`;
+            if (listing.isClosed) {
+              if (listing.isWinning) {
+                statusBadge = `<span style="background: #dcfce7; color: #166534; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700;">🏆 Won Auction</span>`;
+              } else {
+                statusBadge = `<span style="background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;">❌ Outbid / Lost</span>`;
+              }
+            }
+
+            return `
+              <div style="border: 1px solid var(--border-light); border-radius: 10px; padding: 16px; background: #fff; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">${aucCode}</span>
+                    ${statusBadge}
+                  </div>
+                  <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 2px;">${listing.animal_type || 'Livestock'} · ${listing.weight ? Number(listing.weight) + ' kg' : 'N/A'}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Breed: <strong>${listing.breed || 'Native'}</strong> · <span style="color: #1e5631; font-weight: 600;">${listing.totalUserBidsCount} bid(s) placed</span></div>
+                  
+                  <div style="background: #f9fafb; border: 1px solid #eaeaea; border-radius: 8px; padding: 10px; font-size: 0.82rem; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: var(--text-muted);">Your Highest Bid:</span>
+                      <span style="font-weight: 700;">₱${listing.highestUserBid.toLocaleString('en-PH')}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span style="color: var(--text-muted);">Current / Final:</span>
+                      <span style="font-weight: 700; color: #1e5631;">₱${listing.currentHighest.toLocaleString('en-PH')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <a href="auction-room.html?id=${listing.listing_id}" class="btn btn-outline" style="width: 100%; text-align: center; justify-content: center; font-size: 0.8rem; text-decoration: none; padding: 6px;">View auction &rarr;</a>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      // Render Pending Receivables
+      const pendingGrid = document.getElementById('pendingReceivableGrid');
+      const pendingBadge = document.getElementById('pendingCountBadge');
+      if (pendingBadge) pendingBadge.textContent = `${pendingItems.length} awaiting receipt`;
+
+      if (pendingGrid) {
+        if (pendingItems.length === 0) {
+          pendingGrid.innerHTML = `
+            <div style="padding: 24px; text-align: center; color: #666; background: #fafafa; border-radius: 8px; border: 1px dashed #eaeaea;">
+              <p style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 0.9rem;">No pending receivables to project</p>
+              <p style="color: #777; font-size: 0.80rem;">Deliveries awaiting your receipt confirmation will appear here.</p>
+            </div>
+          `;
+        } else {
+          pendingGrid.innerHTML = pendingItems.map(item => `
+            <div style="border: 1px solid var(--border-light); border-radius: 10px; padding: 16px; background: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div>
+                <div style="font-weight: 700; font-size: 0.95rem;">${item.animal_type} · ${item.weight} kg</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')} · Amount due: ₱${Number(item.highestUserBid).toLocaleString('en-PH')}</div>
+              </div>
+              <button onclick="confirmReceipt(${item.listing_id})" class="btn btn-dark-green" style="font-size: 0.8rem; padding: 8px 16px; cursor: pointer;">Confirm receipt</button>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Render Won Bidding Table
+      const wonTableBody = document.getElementById('wonBiddingTableBody');
+      if (wonTableBody) {
+        if (wonItems.length === 0) {
+          wonTableBody.innerHTML = `
+            <tr>
+              <td colspan="5" style="padding: 30px; text-align: center; color: #666; background: #fafafa; border-radius: 8px;">
+                <p style="font-weight: 600; color: #333; margin-bottom: 4px; font-size: 0.9rem;">No won bidding records to project</p>
+                <p style="color: #777; font-size: 0.80rem;">Completed auction wins and payment records will appear here.</p>
+              </td>
+            </tr>
+          `;
+        } else {
+          wonTableBody.innerHTML = wonItems.map(item => {
+            const isCompleted = String(item.auction_status || '').toLowerCase() === 'completed';
+            return `
+              <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 12px 10px; font-weight: 600;">${item.animal_type} · ${item.weight} kg<br><span style="font-size: 0.75rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')}</span></td>
+                <td style="padding: 12px 10px; color: var(--text-muted);">${item.created_at ? parseLocalDate(item.created_at).toLocaleDateString() : 'N/A'}</td>
+                <td style="padding: 12px 10px; font-weight: 700;">₱${item.highestUserBid.toLocaleString('en-PH')}</td>
+                <td style="padding: 12px 10px;"><span class="badge ${isCompleted ? 'badge-green' : 'badge-amber'}">${isCompleted ? 'Won & Settled' : 'Pending Receipt'}</span></td>
+                <td style="padding: 12px 10px; text-align: right;"><a href="auction-room.html?id=${item.listing_id}" class="btn btn-outline" style="font-size: 0.75rem; padding: 4px 10px; text-decoration: none;">View order &rarr;</a></td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+
+    } catch (err) {
+      console.error('Error syncing my-purchases:', err);
+      if (liveGrid) {
+        liveGrid.innerHTML = `<div style="padding: 20px; color: #dc2626; text-align: center;">Error loading bid history: ${err.message}</div>`;
+      }
+    }
+  });
+
+  // Global Notification Bell & Dropdown Initializer with Red Dot Clearance
+  async function initBuyerNotifications() {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') return;
+    const bidderId = user.user_id || user.id || user.userId;
+
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const notifList = document.getElementById('notificationList');
+    const notifBadge = document.getElementById('notifBadge');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_notifications_read', 'true');
+        }
+      });
+
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        notifDropdown.style.display = 'none';
+      });
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const result = await res.json();
+      const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
+
+      if (res.ok && result.success) {
+        const notifs = result.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
+          if (notifList) {
+            notifList.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }
+
+  initBuyerNotifications();
+</script>
+</body>
+</html>

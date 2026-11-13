@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Browse Auctions</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    /* Marketplace Specific Styles */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-input-wrapper input {
+      padding-left: 40px;
+    }
+
+    .filter-select {
+      padding: 10px 14px;
+      background: #ffffff;
+      border: 1px solid var(--border-input);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 20px;
+      border-bottom: 1px solid var(--border-light);
+      margin-bottom: 24px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .filter-tab {
+      padding-bottom: 10px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      color: var(--brand-dark-green);
+      border-bottom-color: var(--brand-dark-green);
+    }
+
+    .auction-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .auction-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .auction-card-img {
+      height: 200px;
+      background-color: #e5e9e5;
+      position: relative;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .auction-card-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+    }
+
+    .auction-card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .auction-card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .auction-card-id {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 12px;
+    }
+
+    .auction-specs {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .auction-location {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .auction-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .current-bid-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .current-bid-amount {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .auction-time-end {
+      text-align: right;
+    }
+
+    .time-end-label {
+      font-size: 0.72rem;
+      color: var(--status-red-text);
+      font-weight: 600;
+    }
+
+    .time-end-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body class="dashboard-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="marketplace.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 0 1-8 0" />
+        </svg>
+        <span>Browse Auctions</span>
+      </a>
+      <a href="my-purchases.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        </svg>
+        <span>My Bids</span>
+      </a>
+      <a href="wallet.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M12 12h2v4h-2z" />
+          <path d="M2 10h20" />
+        </svg>
+        <span>Wallet</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09A1.65 1.65 0 0 0-1.51 1z"/></svg>
+  <span>Settings</span>
+</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- Topbar -->
+   <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right" style="position: relative;">
+        <span class="role-badge">BUYER</span>
+        
+        <!-- Notifications Bell Button with Dropdown -->
+       <!-- Notifications Bell Button with Dropdown -->
+      <div style="position: relative; display: inline-block;">
+        <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notifBadge" style="position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none;"></span>
+        </button>
+
+        <!-- Dropdown Menu Box -->
+        <div id="notificationDropdown" style="display: none; position: absolute; right: 0; top: 40px; width: 320px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+            <span style="font-weight: 700; font-size: 0.9rem; color: #111;">Notifications</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">Real-time</span>
+          </div>
+          <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 0.82rem; color: #444;">
+            <div style="padding: 10px; text-align: center; color: #777; font-style: italic;">No new notifications</div>
+          </div>
+        </div>
+      </div>
+
+        <!-- User Profile Avatar Button with Dropdown -->
+        <div style="position: relative; display: inline-block;">
+          <button id="profileDropdownBtn" class="icon-btn" aria-label="Profile" style="cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+          <div id="profileDropdownMenu" style="display: none; position: absolute; right: 0; top: 40px; width: 240px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 12px;">
+            <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div id="dropdownUserName" style="font-weight: 700; font-size: 0.88rem; color: #111;">Buyer User</div>
+              <div id="dropdownUserEmail" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">buyer@gmail.com</div>
+            </div>
+            <a href="settings.html" style="display: block; padding: 8px 10px; font-size: 0.82rem; color: #333; text-decoration: none; border-radius: 4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">Account Settings</a>
+            <button id="logoutBtn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-size: 0.82rem; color: #dc2626; font-weight: 600; cursor: pointer; border-radius: 4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">Log out</button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <div class="dash-container">
+
+      <div class="page-header-row">
+        <div>
+          <h1 class="page-title">Browse Auctions</h1>
+          <p class="page-subtitle">Find your next livestock purchase from trusted farmers.</p>
+        </div>
+        <div class="date-pill">
+          <span>Sep 26, 2026</span>
+        </div>
+      </div>
+
+      <!-- Wallet Banner Summary -->
+      <div
+        style="background-color: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div style="font-size: 0.875rem;">
+          <strong style="color: var(--brand-dark-green);">₱46,500 available to bid</strong>
+          <span style="color: var(--text-secondary); margin-left: 8px;">· ₱100,000 balance − ₱53,000 in bid commitments
+            − ₱500 pending-payment hold</span>
+        </div>
+        <a href="wallet.html" class="btn btn-dark-green" style="padding: 8px 16px; font-size: 0.8rem;">+ Top up
+          money</a>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="filter-bar">
+        <div class="search-input-wrapper">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" class="form-control" placeholder="Search livestock, breed or auction ID">
+        </div>
+        <select class="filter-select">
+          <option>All animal types</option>
+          <option>Carabao</option>
+          <option>Cattle</option>
+          <option>Goat</option>
+          <option>Pig</option>
+        </select>
+        <select class="filter-select">
+          <option>All locations</option>
+          <option>San Jose, Nueva Ecija</option>
+          <option>Talavera, Nueva Ecija</option>
+          <option>Guimba, Nueva Ecija</option>
+        </select>
+        <select class="filter-select">
+          <option>Price range</option>
+          <option>Under ₱10,000</option>
+          <option>₱10,000 - ₱50,000</option>
+        </select>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <span class="filter-tab active" id="liveAuctionsTab">Live auctions</span>
+        <span class="filter-tab">Ending soon</span>
+        <span class="filter-tab">My bids</span>
+      </div>
+
+      <!-- Auction Cards Grid (Dynamic Only) -->
+      <div class="auction-grid" id="marketplaceGrid">
+        <!-- Dynamically populated from database via port 3000 -->
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+  let allMarketplaceListings = [];
+  let activeSlideIndex = {};
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Verify buyer session
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') {
+      window.location.href = '../auth/login.html';
+      return;
+    }
+
+    if (user) {
+      const nameEl = document.getElementById('dropdownUserName');
+      const emailEl = document.getElementById('dropdownUserEmail');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+    }
+
+    // 2. Toggle Notification and Profile Dropdowns & Handle Red Dot
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+    const notifBadge = document.getElementById('notifBadge');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (profileMenu) profileMenu.style.display = 'none';
+        
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_notifications_read', 'true');
+        }
+      });
+    }
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (notifDropdown) notifDropdown.style.display = 'none';
+        profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (notifDropdown) notifDropdown.style.display = 'none';
+      if (profileMenu) profileMenu.style.display = 'none';
+    });
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '../auth/login.html';
+      });
+    }
+
+    // 3. Load Marketplace Listings directly into #marketplaceGrid from port 3000
+    const grid = document.getElementById('marketplaceGrid');
+    if (grid) {
+      await loadMarketplaceListings(grid);
+    }
+
+    // 4. Fetch Real-time Notifications via Unified Endpoint
+    const bidderId = user.id || user.user_id || user.userId;
+    try {
+      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const result = await res.json();
+      const list = document.getElementById('notificationList');
+      const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
+
+      if (res.ok && result.success) {
+        const notifs = result.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
+          if (list) {
+            list.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading marketplace notifications:', err);
+    }
+  });
+
+  async function loadMarketplaceListings(grid) {
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/listings');
+      const result = await response.json();
+
+      if (!response.ok || !result.success) return;
+
+      allMarketplaceListings = result.data;
+
+      document.querySelectorAll('a, button, span, div').forEach(el => {
+        if (el.children.length === 0 && /^Live auctions \(\d+\)$/i.test(el.textContent.trim())) {
+          el.textContent = `Live auctions (${allMarketplaceListings.length})`;
+        }
+      });
+
+      if (allMarketplaceListings.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #fff; border-radius: 12px; color: #666;">
+            No live livestock auctions available right now.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = allMarketplaceListings.map(item => {
+        const photos = Array.isArray(item.images) && item.images.length > 0 
+          ? item.images 
+          : [item.image_url || 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55'];
+
+        activeSlideIndex[item.listing_id] = 0;
+
+        const code = `LV-${String(item.listing_id).padStart(3, '0')}`;
+        const currentPrice = item.current_highest_bid || item.starting_price;
+        const priceLabel = item.current_highest_bid ? 'CURRENT HIGHEST' : 'STARTING PRICE';
+
+        // Dynamic Badge Evaluation based on status and expiration time with local device time parsing
+        const rawEnds = item.auction_ends_at;
+        const endsAt = rawEnds ? new Date(String(rawEnds).includes('T') ? rawEnds : rawEnds.replace(' ', 'T')).getTime() : 0;
+        const now = new Date().getTime();
+        const rawStatus = (item.auction_status || 'live').toLowerCase();
+        
+        let badgeText = 'Live auction';
+        let badgeBg = '#e8f5e9'; // soft green
+        let badgeColor = '#1e5631'; // dark green
+
+        if ((endsAt && now > endsAt) || rawStatus === 'ended' || rawStatus === 'closed') {
+          badgeText = 'Auction Ended';
+          badgeBg = '#fee2e2'; // soft red
+          badgeColor = '#991b1b'; // dark red
+        } else if (rawStatus === 'scheduled') {
+          badgeText = 'Scheduled';
+          badgeBg = '#e0f2fe'; // soft blue
+          badgeColor = '#0369a1'; // dark blue
+        } else if (rawStatus === 'draft' || rawStatus === 'unlisted') {
+          badgeText = 'Draft / Unlisted';
+          badgeBg = '#fef3c7'; // soft amber
+          badgeColor = '#92400e'; // dark amber
+        }
+
+        return `
+          <div style="background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; flex-direction: column;">
+            
+            <div style="position: relative; height: 200px; background: #e5e7eb; overflow: hidden;">
+              <img id="card-img-${item.listing_id}" src="${photos[0]}" alt="${item.animal_type}" style="width: 100%; height: 100%; object-fit: cover;">
+              
+              <span style="position: absolute; top: 12px; left: 12px; background: ${badgeBg}; color: ${badgeColor}; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; border-radius: 999px; z-index: 5;">
+                ${badgeText}
+              </span>
+
+              <span style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.72rem; font-weight: 600; padding: 4px 9px; border-radius: 999px;" id="card-counter-${item.listing_id}">
+                📷 1 / ${photos.length}
+              </span>
+
+              ${photos.length > 1 ? `
+                <button type="button" onclick="changeCardPhoto(${item.listing_id}, -1)" style="position: absolute; top: 50%; left: 8px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">&lsaquo;</button>
+                <button type="button" onclick="changeCardPhoto(${item.listing_id}, 1)" style="position: absolute; top: 50%; right: 8px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">&rsaquo;</button>
+              ` : ''}
+            </div>
+
+            ${photos.length > 1 ? `
+              <div style="display: flex; gap: 6px; padding: 8px 16px; background: #f8faf8; border-bottom: 1px solid #f0f0f0; overflow-x: auto;">
+                ${photos.map((src, idx) => `
+                  <img src="${src}" onclick="setCardPhoto(${item.listing_id}, ${idx})" style="width: 40px; height: 32px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid ${idx === 0 ? '#1e5631' : 'transparent'};" id="thumb-${item.listing_id}-${idx}">
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <div style="padding: 18px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <h3 style="font-size: 1.05rem; font-weight: 700; color: #111; margin: 0 0 2px 0;">${item.animal_type} · ${item.breed}</h3>
+                <div style="font-size: 0.75rem; color: #888; margin-bottom: 10px;">${code}</div>
+                
+                <div style="font-size: 0.82rem; color: #444; margin-bottom: 6px;">
+                  ${Number(item.weight)} kg &middot; ${item.sex} &middot; ${item.age}
+                </div>
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 16px;">
+                  &#128205; ${item.farmer_address || 'Verified Farm'} &middot; ${item.farmer_first_name || 'Farmer'}
+                </div>
+              </div>
+
+              <div style="border-top: 1px solid #f0f0f0; padding-top: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
+                  <div>
+                    <div style="font-size: 0.68rem; font-weight: 700; color: #777; letter-spacing: 0.04em;">${priceLabel}</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #1e5631;">
+                      ₱${Number(currentPrice).toLocaleString('en-PH')}
+                    </div>
+                  </div>
+                  <span style="font-size: 0.75rem; color: ${badgeColor}; font-weight: 600;">${badgeText}</span>
+                </div>
+
+                <button type="button" onclick="openBuyerAuctionRoom(${item.listing_id})" style="width: 100%; background: #1e5631; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+                  Inspect Photos & Place Bid &rarr;
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (err) {
+      console.error('Error loading marketplace listings:', err);
+    }
+  }
+
+  window.changeCardPhoto = function(listingId, direction) {
+    const item = allMarketplaceListings.find(l => l.listing_id === listingId);
+    if (!item || !item.images) return;
+    const total = item.images.length;
+    activeSlideIndex[listingId] = (activeSlideIndex[listingId] + direction + total) % total;
+    setCardPhoto(listingId, activeSlideIndex[listingId]);
+  };
+
+  window.setCardPhoto = function(listingId, index) {
+    const item = allMarketplaceListings.find(l => l.listing_id === listingId);
+    if (!item || !item.images) return;
+    activeSlideIndex[listingId] = index;
+
+    document.getElementById(`card-img-${listingId}`).src = item.images[index];
+    document.getElementById(`card-counter-${listingId}`).textContent = `📷 ${index + 1} / ${item.images.length}`;
+
+    item.images.forEach((_, idx) => {
+      const thumb = document.getElementById(`thumb-${listingId}-${idx}`);
+      if (thumb) thumb.style.borderColor = idx === index ? '#1e5631' : 'transparent';
+    });
+  };
+
+  window.openBuyerAuctionRoom = function(listingId) {
+    localStorage.setItem('selected_listing_id', listingId);
+    window.location.href = `auction-room.html?id=${listingId}`;
+  };
+
+  // Global Notification Bell & Dropdown Initializer for Bidder Pages
+  async function initBuyerNotifications() {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'bidder') return;
+    const bidderId = user.user_id || user.id || user.userId;
+
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const notifList = document.getElementById('notificationList');
+    const notifBadge = document.getElementById('notifBadge');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+
+      document.addEventListener('click', () => {
+        notifDropdown.style.display = 'none';
+      });
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        const notifs = result.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge) notifBadge.style.display = 'block';
+          if (notifList) {
+            notifList.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  }
+
+  // Call this inside your DOMContentLoaded event listener on all bidder pages
+  initBuyerNotifications();
+
+  document.addEventListener('DOMContentLoaded', async () => {
+  const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+  if (!user || user.role !== 'bidder') return;
+  const bidderId = user.user_id || user.id || user.userId;
+
+  const notifBtn = document.getElementById('notificationBtn');
+  const notifDropdown = document.getElementById('notificationDropdown');
+  const notifBadge = document.getElementById('notifBadge');
+  const notifList = document.getElementById('notificationList');
+
+  if (notifBtn && notifDropdown) {
+    notifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = notifDropdown.style.display === 'block';
+      notifDropdown.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen && notifBadge) {
+        notifBadge.style.display = 'none';
+        localStorage.setItem('farmbid_notifications_read', 'true');
+      }
+    });
+
+    notifDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    document.addEventListener('click', () => {
+      notifDropdown.style.display = 'none';
+    });
+  }
+
+  try {
+    const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+    const result = await res.json();
+    const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
+
+    if (res.ok && result.success) {
+      const notifs = result.data || [];
+      if (notifs.length > 0) {
+        if (notifBadge && !isRead) notifBadge.style.display = 'block';
+        if (notifList) {
+          notifList.innerHTML = notifs.map(n => `
+            <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+              <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+              <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+              <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+            </div>
+          `).join('');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching notifications:', err);
+  }
+});
+</script>
+
+</body>
+
+</html>

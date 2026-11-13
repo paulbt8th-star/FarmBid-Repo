@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Farmer Earnings & GCash Payouts</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="dashboard-layout">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="dashboard.html" class="brand-logo">
+        <img src="../assets/images/logo.png" alt="FarmBid Logo">
+      </a>
+    </div>
+
+    <div class="workspace-label">Workspace</div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="manage-listings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>My Livestock</span>
+      </a>
+      <a href="delivery-queue.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <span>Auctions</span>
+      </a>
+      <a href="earnings.html" class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Earnings</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <header class="dash-topbar">
+      <div></div>
+      <div class="dash-topbar-right" style="position: relative;">
+        <span class="role-badge" style="background-color: var(--bg-soft-green); color: var(--brand-dark-green);">FARMER</span>
+        
+        <!-- Notifications Bell Button -->
+        <div style="position: relative; display: inline-block;">
+          <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notifBadge" style="position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: none;"></span>
+          </button>
+
+          <!-- Notifications Dropdown Popup -->
+          <div id="notificationDropdown" style="display: none; position: absolute; right: 0; top: 40px; width: 320px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+              <span style="font-weight: 700; font-size: 0.9rem; color: #111;">Notifications</span>
+            </div>
+            <div id="notificationList" style="max-height: 250px; overflow-y: auto; font-size: 0.82rem; color: #444;">
+              <div style="padding: 10px; text-align: center; color: #777; font-style: italic;">No new notifications</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Avatar Button -->
+        <div style="position: relative; display: inline-block;">
+          <button id="profileDropdownBtn" class="icon-btn" aria-label="Profile" style="cursor: pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div id="profileDropdownMenu" style="display: none; position: absolute; right: 0; top: 40px; width: 240px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; box-shadow: var(--shadow-card); z-index: 1000; padding: 12px;">
+            <div style="padding: 8px 10px; border-bottom: 1px solid var(--border-light); margin-bottom: 8px;">
+              <div id="dropdownUserName" style="font-weight: 700; font-size: 0.88rem; color: #111;">Farmer User</div>
+              <div id="dropdownUserEmail" style="font-size: 0.75rem; color: var(--text-muted); word-break: break-all;">farmer@gmail.com</div>
+            </div>
+            <a href="settings.html" style="display: block; padding: 8px 10px; font-size: 0.82rem; color: #333; text-decoration: none; border-radius: 4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">Account Settings</a>
+            <button id="logoutBtn" style="width: 100%; text-align: left; background: none; border: none; padding: 8px 10px; font-size: 0.82rem; color: #dc2626; font-weight: 600; cursor: pointer; border-radius: 4px;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">Log out</button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <div class="dash-container">
+      
+      <div class="page-header-row">
+        <div>
+          <h1 class="page-title">Earnings</h1>
+          <p class="page-subtitle">Monitor your profit, track settlements and withdraw your available earnings via GCash.</p>
+        </div>
+        <div class="date-pill">
+          <span id="currentDateDisplay">Nov 1, 2026</span>
+        </div>
+      </div>
+
+      <!-- Top 2 Cards: Available to Withdraw & Pending Settlement -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+        
+        <!-- Available to Withdraw Box -->
+        <div style="background-color: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-card);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Available to withdraw</span>
+              <span class="badge badge-green">Ready via GCash</span>
+            </div>
+            <div id="walletBalanceDisplay" style="font-size: 2.2rem; font-weight: 700; color: var(--brand-dark-green); letter-spacing: -0.02em; margin-bottom: 4px;">₱0.00</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">GCash Instant Payout Balance</div>
+          </div>
+          <button id="openWithdrawModalBtn" class="btn btn-dark-green" style="padding: 12px 24px; background-color: var(--brand-dark-green); cursor: pointer;">Withdraw via GCash</button>
+        </div>
+
+        <!-- Pending Settlement Box (With Explicit IDs Added) -->
+        <div style="background-color: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-card);">
+          <div style="font-size: 0.78rem; font-weight: 600; color: #b45309; text-transform: uppercase; margin-bottom: 4px;">Pending settlement</div>
+          <div id="pendingAmountDisplay" style="font-size: 1.6rem; font-weight: 700; color: #92400e; margin-bottom: 4px;">₱0.00</div>
+          <div id="pendingSubtitleDisplay" style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+            0 pending delivery<br>
+            <span style="color: var(--text-muted);">Released after delivery confirmation.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Withdrawal History Table -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div>
+            <h2 class="dash-card-title">Withdrawal history</h2>
+            <p class="dash-card-subtitle">Track transfers from your FarmBid wallet to your GCash account.</p>
+          </div>
+          <a href="#" style="font-size: 0.8rem; font-weight: 600;">Export history &downarrow;</a>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Reference</th>
+                <th>Requested On</th>
+                <th>GCash Number</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th style="text-align: right;">Received On</th>
+              </tr>
+            </thead>
+            <tbody id="withdrawalTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: #666; padding: 20px; font-style: italic;">Loading withdrawal history...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: var(--text-secondary);">
+          <span id="gcashAccountDisplay">📱 Connected GCash: --</span>
+          <span>GCash transfers are credited instantly.</span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- WITHDRAWAL MODAL -->
+  <div id="withdrawModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: var(--shadow-card);">
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 4px;">Withdraw via GCash</h2>
+      <p style="font-size: 0.82rem; color: #666; margin-bottom: 20px;">Transfer funds securely to any GCash mobile wallet number.</p>
+      
+      <form id="withdrawForm">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">Destination GCash Number</label>
+          <input type="text" id="gcashNumberInput" class="form-control" placeholder="09171234567" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;" maxlength="11">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; display: block;">Withdrawal Amount (₱)</label>
+          <input type="number" id="withdrawAmountInput" class="form-control" placeholder="0.00" step="0.01" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="submit" class="btn btn-dark-green" style="flex: 1; justify-content: center; background-color: var(--brand-dark-green); cursor: pointer;">Confirm transfer</button>
+          <button type="button" id="closeModalBtn" class="btn btn-outline" style="flex: 1; justify-content: center; cursor: pointer;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
+    if (!user || user.role !== 'farmer') {
+      window.location.href = '../auth/login.html';
+      return;
+    }
+
+    if (user) {
+      const nameEl = document.getElementById('dropdownUserName');
+      const emailEl = document.getElementById('dropdownUserEmail');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Farmer'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+    }
+
+    const farmerId = user.user_id || user.id || user.userId;
+
+    // Toggle Notification & Profile Dropdowns & Handle Red Dot Clearance
+    const notifBtn = document.getElementById('notificationBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+    const notifBadge = document.getElementById('notifBadge');
+    const notifList = document.getElementById('notificationList');
+
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (profileMenu) profileMenu.style.display = 'none';
+        
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_farmer_notifications_read', 'true');
+        }
+      });
+
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (notifDropdown) notifDropdown.style.display = 'none';
+        profileMenu.style.display = profileMenu.style.display === 'block' ? 'none' : 'block';
+      });
+
+      profileMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    document.addEventListener('click', () => {
+      if (notifDropdown) notifDropdown.style.display = 'none';
+      if (profileMenu) profileMenu.style.display = 'none';
+    });
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '../auth/login.html';
+      });
+    }
+
+    // Modal Handlers
+    const withdrawModal = document.getElementById('withdrawModal');
+    const openBtn = document.getElementById('openWithdrawModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const withdrawForm = document.getElementById('withdrawForm');
+
+    if (openBtn && withdrawModal) openBtn.addEventListener('click', () => { withdrawModal.style.display = 'flex'; });
+    if (closeBtn && withdrawModal) closeBtn.addEventListener('click', () => { withdrawModal.style.display = 'none'; });
+
+    if (withdrawForm) {
+      withdrawForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = document.getElementById('withdrawAmountInput').value;
+        const gcashNumber = document.getElementById('gcashNumberInput').value;
+
+        try {
+          const res = await fetch('http://127.0.0.1:3000/api/farmer/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ farmerId, amount, gcashNumber })
+          });
+          const result = await res.json();
+          if (result.success) {
+            alert('GCash withdrawal successful!');
+            window.location.reload();
+          } else {
+            alert(result.message || 'Withdrawal failed.');
+          }
+        } catch (err) {
+          console.error('Withdrawal error:', err);
+          alert('Server connection error.');
+        }
+      });
+    }
+
+    try {
+      const [walletRes, queueRes, notifRes] = await Promise.all([
+        fetch(`http://127.0.0.1:3000/api/farmer/wallet/${farmerId}`),
+        fetch(`http://127.0.0.1:3000/api/farmer/delivery-queue/${farmerId}`),
+        fetch(`http://127.0.0.1:3000/api/farmer/notifications/${farmerId}`)
+      ]);
+
+      const walletResult = await walletRes.json();
+      const queueResult = await queueRes.json();
+      const notifResult = await notifRes.json();
+      const isRead = localStorage.getItem('farmbid_farmer_notifications_read') === 'true';
+
+      if (notifRes.ok && notifResult.success) {
+        const notifs = notifResult.data || [];
+        if (notifs.length > 0) {
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
+          if (notifList) {
+            notifList.innerHTML = notifs.map(n => `
+              <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
+                <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
+                <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
+              </div>
+            `).join('');
+          }
+        }
+      }
+
+      if (walletResult.success) {
+        const data = walletResult.data;
+        let pendingAmt = 0;
+        let pendingCnt = 0;
+
+        if (queueResult.success && queueResult.data) {
+          const activePendingListings = queueResult.data.filter(item => String(item.auction_status || '').toLowerCase() !== 'completed');
+          pendingCnt = activePendingListings.length;
+          pendingAmt = activePendingListings.reduce((sum, item) => sum + Number(item.winning_bid || item.current_highest_bid || item.starting_price || 0), 0);
+        }
+
+        const trueBalance = Number(data.balance || 0);
+
+        const balanceEl = document.getElementById('walletBalanceDisplay');
+        if (balanceEl) balanceEl.textContent = `₱${trueBalance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+
+        const pendingAmtEl = document.getElementById('pendingAmountDisplay');
+        if (pendingAmtEl) pendingAmtEl.textContent = `₱${pendingAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+
+        const pendingSubEl = document.getElementById('pendingSubtitleDisplay');
+        if (pendingSubEl) pendingSubEl.innerHTML = `${pendingCnt} pending delivery<br><span style="color: var(--text-muted);">Released after delivery confirmation.</span>`;
+
+        const gcashDisplay = document.getElementById('gcashAccountDisplay');
+        if (gcashDisplay && data.gcash_number) gcashDisplay.textContent = `📱 Connected GCash: ${data.gcash_number}`;
+
+        const withdrawals = data.withdrawals || [];
+        const historyTableBody = document.getElementById('withdrawalTableBody');
+        if (historyTableBody) {
+          if (withdrawals.length === 0) {
+            historyTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No GCash withdrawal records yet.</td></tr>`;
+          } else {
+            historyTableBody.innerHTML = withdrawals.map(w => `
+              <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 12px 10px; font-weight: 600;">${w.reference_code}</td>
+                <td style="padding: 12px 10px; color: var(--text-muted);">${w.requested_at}</td>
+                <td style="padding: 12px 10px;">${w.gcash_number}</td>
+                <td style="padding: 12px 10px; font-weight: 700; color: var(--brand-dark-green);">₱${Number(w.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 12px 10px;"><span class="badge badge-green">${w.status}</span></td>
+                <td style="padding: 12px 10px; text-align: right; color: var(--text-muted);">${w.requested_at}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading earnings data:', err);
+    }
+  });
+</script>
+
+</body>
+</html>

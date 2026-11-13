@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmBid · Create Livestock Listing</title>
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/auth.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    body { background-color: var(--bg-canvas, #f3f6f3); font-family: 'Inter', sans-serif; }
+    .listing-container { max-width: 680px; margin: 40px auto; background: #ffffff; border-radius: var(--radius-lg, 12px); padding: 36px; box-shadow: var(--shadow-card, 0 4px 20px rgba(0,0,0,0.05)); }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-weight: 600; font-size: 0.85rem; color: var(--text-primary, #111); margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-light, #ddd); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    .form-control:focus { border-color: #1e5631; }
+    .btn-primary-custom { background-color: #1e5631; color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: background 0.2s; }
+    .btn-primary-custom:hover { background-color: #164225; }
+    .btn-primary-custom:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+    /* Multi-Photo Drag and Drop Zone */
+    .drop-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 24px 20px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #f8faf8;
+      transition: all 0.2s ease;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #1e5631;
+      background-color: #e8f5e9;
+    }
+    .drop-zone input[type="file"] {
+      display: none;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .thumb-card {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #dcdcdc;
+      height: 100px;
+      background: #eee;
+    }
+    .thumb-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .cover-badge {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      background: rgba(30, 86, 49, 0.9);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .remove-thumb-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(220, 38, 38, 0.9);
+      color: #fff;
+      border: none;
+      font-size: 0.85rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP NAV WITH OFFICIAL IMAGE LOGO -->
+  <header style="background: #ffffff; padding: 16px 32px; border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: center;">
+    <a href="dashboard.html" class="brand-logo" style="display: flex; align-items: center; text-decoration: none;">
+      <img src="../assets/images/logo.png" alt="FarmBid Logo" style="height: 32px; object-fit: contain;">
+    </a>
+    <a href="manage-listings.html" style="font-size: 0.85rem; font-weight: 600; color: #1e5631; text-decoration: none;">&larr; Back to My Listings</a>
+  </header>
+
+  <!-- MAIN FORM CONTAINER -->
+  <main class="listing-container">
+    <div style="margin-bottom: 24px;">
+      <h1 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-bottom: 4px;">Create New Livestock Listing</h1>
+      <p style="font-size: 0.85rem; color: #666;">Fill out the details below to publish your livestock for live bidding on the FarmBid marketplace.</p>
+    </div>
+
+    <form id="createListingForm">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label" for="animalType">Animal Type</label>
+          <select id="animalType" class="form-control" required>
+            <option value="">Select type...</option>
+            <option value="Cattle">Cattle (Baka)</option>
+            <option value="Goat">Goat (Kambing)</option>
+            <option value="Swine">Swine / Pig (Baboy)</option>
+            <option value="Carabao">Carabao (Kalabaw)</option>
+            <option value="Poultry">Poultry</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="breed">Breed</label>
+          <input type="text" id="breed" class="form-control" required placeholder="e.g., Brahman, Native, Anglo-Nubian">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label" for="sex">Sex</label>
+          <select id="sex" class="form-control" required>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="age">Age</label>
+          <input type="text" id="age" class="form-control" required placeholder="e.g., 14 months">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label" for="weight">Weight (kg)</label>
+          <input type="number" step="0.01" id="weight" class="form-control" required placeholder="e.g., 350.00">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="startingPrice">Starting Price (₱)</label>
+          <input type="number" step="0.01" id="startingPrice" class="form-control" required placeholder="e.g., 45000.00">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="auctionEndsAt">Auction Closing Date & Time</label>
+        <input type="datetime-local" id="auctionEndsAt" class="form-control" required>
+      </div>
+
+      <!-- MULTI-PHOTO DRAG & DROP UPLOAD -->
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label class="form-label" style="margin-bottom: 0;">Livestock Photos (Up to 6 images)</label>
+          <span id="photoCounter" style="font-size: 0.78rem; color: #666; font-weight: 600;">0 / 6 photos</span>
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="photoInput" accept="image/*" multiple>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1e5631" stroke-width="1.8" style="margin-bottom: 6px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div style="font-weight: 600; font-size: 0.9rem; color: #111;">Drag & drop multiple livestock photos here</div>
+          <div style="font-size: 0.78rem; color: #666; margin-top: 4px;">or <span style="color: #1e5631; font-weight: 600; text-decoration: underline;">click to browse</span> (Front, side, and weight photos recommended)</div>
+        </div>
+
+        <!-- Thumbnail Preview Grid -->
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </div>
+
+      <!-- VETERINARY / COMPLIANCE DOCUMENTS UPLOAD -->
+      <div class="form-group">
+        <label class="form-label" for="docInput">Verification & Compliance Documents (Optional)</label>
+        <div style="font-size: 0.78rem; color: #666; margin-bottom: 6px;">Attach Vet Health Certificate, Ownership Certificate, or Transfer Permit to reassure buyers against scams.</div>
+        <input type="file" id="docInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple style="padding: 8px;">
+        <div id="docList" style="font-size: 0.8rem; color: #1e5631; margin-top: 6px; font-weight: 600;"></div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-primary-custom">Publish Listing to Marketplace</button>
+    </form>
+  </main>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const photoInput = document.getElementById('photoInput');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const photoCounter = document.getElementById('photoCounter');
+    const docInput = document.getElementById('docInput');
+    const docList = document.getElementById('docList');
+
+    let selectedFiles = [];
+    let selectedDocs = [];
+    const MAX_PHOTOS = 6;
+    let isSubmitting = false;
+
+    dropZone.addEventListener('click', () => photoInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+      dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        processFiles(Array.from(e.dataTransfer.files));
+      }
+    });
+
+    photoInput.addEventListener('change', () => {
+      if (photoInput.files.length) {
+        processFiles(Array.from(photoInput.files));
+        photoInput.value = '';
+      }
+    });
+
+    docInput.addEventListener('change', () => {
+      if (docInput.files.length) {
+        selectedDocs = Array.from(docInput.files);
+        docList.textContent = `📎 ${selectedDocs.length} document(s) attached: ${selectedDocs.map(d => d.name).join(', ')}`;
+      }
+    });
+
+    function processFiles(files) {
+      const validFiles = files.filter(file => file.type.startsWith('image/'));
+      if (validFiles.length === 0) {
+        alert('Please select valid image files (JPG, PNG, WEBP).');
+        return;
+      }
+
+      if (selectedFiles.length + validFiles.length > MAX_PHOTOS) {
+        alert(`You can upload a maximum of ${MAX_PHOTOS} photos per listing.`);
+      }
+
+      const remainingSlots = MAX_PHOTOS - selectedFiles.length;
+      const filesToProcess = validFiles.slice(0, remainingSlots);
+
+      filesToProcess.forEach(file => {
+        selectedFiles.push(file);
+      });
+      renderThumbnails();
+    }
+
+    function renderThumbnails() {
+      photoCounter.textContent = `${selectedFiles.length} / ${MAX_PHOTOS} photos`;
+      galleryGrid.innerHTML = '';
+
+      selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const card = document.createElement('div');
+          card.className = 'thumb-card';
+          card.innerHTML = `
+            <img src="${e.target.result}" alt="Photo ${index + 1}">
+            ${index === 0 ? '<span class="cover-badge">Cover</span>' : ''}
+            <button type="button" class="remove-thumb-btn" onclick="removePhoto(${index})" title="Remove photo">&times;</button>
+          `;
+          galleryGrid.appendChild(card);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    window.removePhoto = function(index) {
+      selectedFiles.splice(index, 1);
+      renderThumbnails();
+    };
+
+    // Single unified form submission handler with absolute local time preservation
+    document.getElementById('createListingForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (isSubmitting) return;
+      isSubmitting = true;
+
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publishing listing...';
+      }
+
+      const user = JSON.parse(localStorage.getItem('farmbid_user'));
+      if (!user || user.role !== 'farmer') {
+        alert('Unauthorized. Please log in as a farmer/seller.');
+        window.location.href = '../auth/login.html';
+        return;
+      }
+
+      try {
+        let uploadedImageUrls = [];
+        let uploadedDocUrls = [];
+
+        // 1. Upload livestock photos
+        if (selectedFiles.length > 0) {
+          const formData = new FormData();
+          selectedFiles.forEach(file => {
+            formData.append('images', file);
+          });
+
+          const uploadRes = await fetch('http://127.0.0.1:3000/api/upload-livestock-images', {
+            method: 'POST',
+            body: formData
+          });
+
+          const uploadData = await uploadRes.json();
+          if (uploadRes.ok && uploadData.success) {
+            uploadedImageUrls = uploadData.images;
+          } else {
+            alert('Image upload failed: ' + (uploadData.message || 'Unknown error'));
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publish Listing to Marketplace';
+            }
+            isSubmitting = false;
+            return;
+          }
+        } else {
+          uploadedImageUrls = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55'];
+        }
+
+        // 2. Upload compliance documents if selected
+        if (selectedDocs.length > 0) {
+          const docFormData = new FormData();
+          selectedDocs.forEach(doc => {
+            docFormData.append('images', doc);
+          });
+
+          const docUploadRes = await fetch('http://127.0.0.1:3000/api/upload-livestock-images', {
+            method: 'POST',
+            body: docFormData
+          });
+
+          const docUploadData = await docUploadRes.json();
+          if (docUploadRes.ok && docUploadData.success) {
+            uploadedDocUrls = docUploadData.images;
+          }
+        }
+
+        // 3. Prevent browser/timezone offset conversion by splitting exact literal input components
+        const rawDateTime = document.getElementById('auctionEndsAt').value; // e.g., "2026-11-05T06:00"
+        let formattedEndsAt = null;
+        if (rawDateTime) {
+          const [datePart, timePart] = rawDateTime.split('T');
+          if (datePart && timePart) {
+            formattedEndsAt = `${datePart} ${timePart}:00`; // Forces exact "YYYY-MM-DD HH:mm:00" string mapping[cite: 19]
+          }
+        }
+
+        // Submit listing data with exact local time string
+        const listingData = {
+          farmerId: user.id || user.user_id,
+          animalType: document.getElementById('animalType').value,
+          breed: document.getElementById('breed').value,
+          sex: document.getElementById('sex').value,
+          age: document.getElementById('age').value,
+          weight: document.getElementById('weight').value,
+          startingPrice: document.getElementById('startingPrice').value,
+          auctionEndsAt: formattedEndsAt, 
+          images: uploadedImageUrls,
+          documents: uploadedDocUrls
+        };
+
+        const response = await fetch('http://127.0.0.1:3000/api/listings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(listingData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert('Listing published successfully with photos and verification documents!');
+          window.location.href = 'manage-listings.html';
+        } else {
+          alert('Failed to create listing: ' + (data.message || 'Please check your inputs.'));
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publish Listing to Marketplace';
+          }
+          isSubmitting = false;
+        }
+      } catch (error) {
+        console.error('Detailed Fetch Error:', error);
+        alert('Network error: ' + error.message);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publish Listing to Marketplace';
+        }
+        isSubmitting = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
