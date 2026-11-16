@@ -1592,5 +1592,25 @@ def serve_auth(filename):
     auth_dir = os.path.join(app.root_path, 'auth')
     return send_from_directory(auth_dir, filename)
 
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory(os.path.join(app.root_path, 'assets'), filename)
+
+@app.route('/auth/<path:filename>')
+def serve_auth_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'auth'), filename)
+
+@app.route('/admin/<path:filename>')
+def serve_admin_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'admin'), filename)
+
+@app.route('/bidder/<path:filename>')
+def serve_bidder_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'bidder'), filename)
+
+@app.route('/farmer/<path:filename>')
+def serve_farmer_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'farmer'), filename)
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
