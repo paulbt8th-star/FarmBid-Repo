@@ -422,8 +422,8 @@ def login_user():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
-        query = "SELECT * FROM users WHERE email = %s AND (password = %s OR password_hash = %s)"
-        cursor.execute(query, (email, password, password))
+        query = "SELECT * FROM users WHERE email = %s AND password_hash = %s"
+        cursor.execute(query, (email, password))
         user = cursor.fetchone()
         
         if not user:
