@@ -418,34 +418,33 @@ def login_user():
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
-        
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-       query = "SELECT * FROM users WHERE email = %s"
-    cursor.execute(query, (email,))
-    user = cursor.fetchone()
 
-    # Verify password (supports hashed passwords and direct admin fallback)
-    password_valid = False
-    if user:
-        stored_hash = user.get('password_hash', '')
-        # Allow admin fallback or direct plaintext/hash check
-        if (email == 'admin@farmbid.com' and password == 'Admin1234') or stored_hash == password:
-            password_valid = True
-        else:
-            try:
-                password_valid = check_password_hash(stored_hash, password)
-            except Exception:
-                password_valid = (stored_hash == password)
+        query = "SELECT * FROM users WHERE email = %s"
+        cursor.execute(query, (email,))
+        user = cursor.fetchone()
 
-    if not user or not password_valid:
-        return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
-            
+        # Verify password (supports hashed passwords and direct admin fallback)
+        password_valid = False
+        if user:
+            stored_hash = user.get('password_hash', '')
+            if (email == 'admin@farmbid.com' and password == 'Admin1234') or stored_hash == password:
+                password_valid = True
+            else:
+                try:
+                    password_valid = check_password_hash(stored_hash, password)
+                except Exception:
+                    password_valid = (stored_hash == password)
+
+        if not user or not password_valid:
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
+
         user_status = str(user.get('status', 'active')).lower()
         acc_status = str(user.get('account_status', 'active')).lower()
         role = user.get('role', 'bidder')
-        
+
         if role != 'admin':
             if user_status == 'rejected' or acc_status == 'rejected':
                 return jsonify({'success': False, 'message': 'Access Denied: Your account registration request was rejected by the administrator.'}), 403
@@ -453,15 +452,17 @@ def login_user():
                 return jsonify({'success': False, 'message': "Account Pending Approval: Your account is currently waiting for an administrator's approval."}), 403
             if user_status in ['suspended', 'banned'] or acc_status in ['suspended', 'banned']:
                 return jsonify({'success': False, 'message': 'Access Restricted: Your account has been suspended or banned by administration.'}), 403
-            
+
         return jsonify({'success': True, 'user': user}), 200
 
     except Exception as e:
-        print("Login Error:", str(e))
+        print(f"Login Error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 9. Get Farmer Wallet & GCash Details (Strictly derived from completed sales only)
 @app.route('/api/farmer/wallet/<int:farmer_id>', methods=['GET'])
