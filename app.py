@@ -1587,5 +1587,10 @@ def get_admin_xendit_status():
 def home():
     return render_template('index.html')
 
+@app.route('/auth/<path:filename>')
+def serve_auth(filename):
+    auth_dir = os.path.join(app.root_path, 'auth')
+    return send_from_directory(auth_dir, filename)
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
