@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 import requests
 import traceback
 from flask import render_template
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Define Philippine Standard Time (GMT+8)
 PHT = timezone(timedelta(hours=8))
