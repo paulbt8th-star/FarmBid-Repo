@@ -1542,44 +1542,50 @@ def get_admin_notifications():
         
         notifications = []
         
-        # 1. Fetch pending user registrations
-        cursor.execute("""
-            SELECT user_id, first_name, last_name, email, role, created_at 
-            FROM users 
-            WHERE status = 'pending' OR status IS NULL 
-            ORDER BY created_at DESC LIMIT 5
-        """)
-        pending_users = cursor.fetchall()
-        for u in pending_users:
-            name = f"{u['first_name'] or 'New'} {u['last_name'] or 'User'}".strip()
-            raw_date = u['created_at']
-            time_str = raw_date.strftime('%Y-%m-%d %H:%M') if hasattr(raw_date, 'strftime') else str(raw_date or 'Recent')
+        # 1. Fetch pending user registrations (using account_status)
+        try:
+            cursor.execute("""
+                SELECT user_id, first_name, last_name, email, role, created_at 
+                FROM users 
+                WHERE account_status = 'pending' OR account_status IS NULL 
+                ORDER BY created_at DESC LIMIT 5
+            """)
+            pending_users = cursor.fetchall()
+            for u in pending_users:
+                name = f"{u.get('first_name') or 'New'} {u.get('last_name') or 'User'}".strip()
+                raw_date = u.get('created_at')
+                time_str = raw_date.strftime('%Y-%m-%d %H:%M') if hasattr(raw_date, 'strftime') else str(raw_date or 'Recent')
 
-            notifications.append({
-                'title': "Pending Registration",
-                'message': f"{name} ({u['role']}) registered and awaits verification.",
-                'time': time_str,
-                'type': 'user'
-            })
+                notifications.append({
+                    'title': "Pending Registration",
+                    'message': f"{name} ({u.get('role', 'user')}) registered and awaits verification.",
+                    'time': time_str,
+                    'type': 'user'
+                })
+        except Exception as user_err:
+            print("Pending users fetch warning:", user_err)
             
-        # 2. Fetch open disputes / reports
-        cursor.execute("""
-            SELECT dispute_id, reason, status, created_at 
-            FROM disputes 
-            WHERE status = 'pending' OR status = 'open' 
-            ORDER BY created_at DESC LIMIT 5
-        """)
-        disputes = cursor.fetchall()
-        for d in disputes:
-            raw_date = d.get('created_at')
-            time_str = raw_date.strftime('%Y-%m-%d %H:%M') if hasattr(raw_date, 'strftime') else str(raw_date or 'Recent')
+        # 2. Fetch open disputes / reports (using id aliased as dispute_id)
+        try:
+            cursor.execute("""
+                SELECT id AS dispute_id, reason, status, created_at 
+                FROM disputes 
+                WHERE status = 'pending' OR status = 'open' 
+                ORDER BY created_at DESC LIMIT 5
+            """)
+            disputes = cursor.fetchall()
+            for d in disputes:
+                raw_date = d.get('created_at')
+                time_str = raw_date.strftime('%Y-%m-%d %H:%M') if hasattr(raw_date, 'strftime') else str(raw_date or 'Recent')
 
-            notifications.append({
-                'title': "Active Dispute Report",
-                'message': f"Report #{d['dispute_id']}: {d['reason']} requires review.",
-                'time': time_str,
-                'type': 'dispute'
-            })
+                notifications.append({
+                    'title': "Active Dispute Report",
+                    'message': f"Report #{d.get('dispute_id', 1)}: {d.get('reason', 'No reason specified')} requires review.",
+                    'time': time_str,
+                    'type': 'dispute'
+                })
+        except Exception as disp_err:
+            print("Disputes fetch warning:", disp_err)
 
         return jsonify({'success': True, 'data': notifications}), 200
 
