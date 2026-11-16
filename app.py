@@ -7,6 +7,7 @@ import json
 from werkzeug.utils import secure_filename
 import requests
 import traceback
+from flask import render_template
 
 # Define Philippine Standard Time (GMT+8)
 PHT = timezone(timedelta(hours=8))
@@ -1585,6 +1586,10 @@ def get_admin_xendit_status():
 @app.route('/')
 def home():
     return jsonify({'success': True, 'message': 'FarmBid API is running live!'}), 200
+
+@app.route('/')
+def home():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
