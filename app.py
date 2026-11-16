@@ -1095,32 +1095,22 @@ def upload_livestock_images():
 
 # 21. Get All Disputes (for Admin Dashboard & Dispute List)
 @app.route('/api/admin/disputes', methods=['GET'])
-def get_all_disputes():
+def get_admin_disputes():
     connection = None
     cursor = None
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
-        query = """
-            SELECT d.*, 
-                   COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'Unknown User') AS reporter_name,
-                   l.animal_type, l.breed
-            FROM disputes d
-            LEFT JOIN users u ON d.reporter_id = u.user_id
-            LEFT JOIN livestock_listings l ON d.reported_listing_id = l.listing_id
-            ORDER BY d.dispute_id DESC
-        """
-        cursor.execute(query)
+        cursor.execute("""
+            SELECT id AS dispute_id, reporter_id, reason, description, status, created_at 
+            FROM disputes 
+            ORDER BY created_at DESC
+        """)
         disputes = cursor.fetchall()
-        
-        for d in disputes:
-            if d.get('created_at') and isinstance(d['created_at'], datetime):
-                d['created_at'] = d['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-
         return jsonify({'success': True, 'data': disputes}), 200
     except Exception as e:
-        print("Get Disputes Error:", str(e))
+        print("Disputes Fetch Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor: cursor.close()
