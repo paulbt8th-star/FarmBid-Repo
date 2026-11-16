@@ -26,10 +26,11 @@ CORS(app)
 
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="farmbid_db"
+        host=os.environ.get("DB_HOST") or os.environ.get("MYSQLHOST") or "localhost",
+        user=os.environ.get("DB_USER") or os.environ.get("MYSQLUSER") or "root",
+        password=os.environ.get("DB_PASSWORD") or os.environ.get("MYSQLPASSWORD") or "",
+        database=os.environ.get("DB_NAME") or os.environ.get("MYSQL_DATABASE") or os.environ.get("MYSQLDATABASE") or "farmbid_db",
+        port=int(os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or 3306)
     )
 
 # 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
