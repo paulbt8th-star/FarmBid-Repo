@@ -367,9 +367,12 @@ def register_user():
         last_name = data.get('lastName')
         email = data.get('email')
         contact = data.get('contactNumber')
-        password = data.get('password')
+        raw_password = data.get('password')
         role = data.get('role', 'bidder')
         address = data.get('address', '')
+        
+        # Hash the password securely for database storage
+        password_hash = generate_password_hash(raw_password)
         
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
@@ -384,20 +387,20 @@ def register_user():
             if user_status == 'rejected' or acc_status == 'rejected':
                 update_query = """
                     UPDATE users 
-                    SET first_name = %s, last_name = %s, contact_number = %s, password = %s, role = %s, address = %s, status = 'pending', account_status = 'pending'
+                    SET first_name = %s, last_name = %s, contact_number = %s, password_hash = %s, role = %s, address = %s, status = 'pending', account_status = 'pending'
                     WHERE email = %s
                 """
-                cursor.execute(update_query, (first_name, last_name, contact, password, role, address, email))
+                cursor.execute(update_query, (first_name, last_name, contact, password_hash, role, address, email))
                 connection.commit()
                 return jsonify({'success': True, 'message': 'Registration re-submitted successfully. Awaiting admin approval.'}), 201
             else:
                 return jsonify({'success': False, 'message': 'An active or pending account with this email address already exists.'}), 400
         else:
             query = """
-                INSERT INTO users (first_name, last_name, email, contact_number, password, role, address, status, account_status)
+                INSERT INTO users (first_name, last_name, email, contact_number, password_hash, role, address, status, account_status)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending', 'pending')
             """
-            cursor.execute(query, (first_name, last_name, email, contact, password, role, address))
+            cursor.execute(query, (first_name, last_name, email, contact, password_hash, role, address))
             connection.commit()
             
         return jsonify({'success': True, 'message': 'Registration successful. Awaiting admin approval.'}), 201
