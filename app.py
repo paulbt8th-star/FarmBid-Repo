@@ -30,7 +30,8 @@ def get_db_connection():
         user=os.environ.get("DB_USER") or os.environ.get("MYSQLUSER") or "root",
         password=os.environ.get("DB_PASSWORD") or os.environ.get("MYSQLPASSWORD") or "",
         database=os.environ.get("DB_NAME") or os.environ.get("MYSQL_DATABASE") or os.environ.get("MYSQLDATABASE") or "farmbid_db",
-        port=int(os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or 3306)
+        port=int(os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or 3306),
+        connection_timeout=5
     )
 
 # 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
