@@ -1185,7 +1185,7 @@ def update_dispute_status(dispute_id):
         connection = get_db_connection()
         cursor = connection.cursor()
         
-        query = "UPDATE disputes SET status = %s WHERE dispute_id = %s"
+        query = "UPDATE disputes SET status = %s WHERE id = %s"
         cursor.execute(query, (new_status, dispute_id))
         connection.commit()
         
