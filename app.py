@@ -10,7 +10,8 @@ import traceback
 
 # Define Philippine Standard Time (GMT+8)
 PHT = timezone(timedelta(hours=8))
-XENDIT_SECRET_KEY = os.environ.get("XENDIT_SECRET_KEY")
+XENDIT_SECRET_KEY = "xnd_development_cOVPjzFmLKHqoI0ZUe7Evb8fJHAhH9Lfkdl4drkqhp8MZgxyazEeGf8gNayl50"
+
 
 def get_pht_now():
     """Returns current datetime explicitly in Philippine Standard Time (GMT+8)"""
