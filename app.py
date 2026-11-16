@@ -1582,5 +1582,9 @@ def get_admin_xendit_status():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+@app.route('/')
+def home():
+    return jsonify({'success': True, 'message': 'FarmBid API is running live!'}), 200
+
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
