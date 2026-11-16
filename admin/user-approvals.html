@@ -289,7 +289,7 @@
 
     // Fetch Admin Notifications
     try {
-      const resNotif = await fetch('http://127.0.0.1:3000/api/admin/notifications');
+      const resNotif = await fetch('/api/admin/notifications');
       const notifResult = await resNotif.json();
       const isRead = localStorage.getItem('farmbid_admin_notifications_read') === 'true';
 
@@ -319,7 +319,7 @@
 
     async function loadUsersData() {
       try {
-        const res = await fetch('http://127.0.0.1:3000/api/dashboard/admin');
+        const res = await fetch('/api/dashboard/admin');
         const result = await res.json();
         if (!res.ok || !result.success) throw new Error(result.message);
 
@@ -438,7 +438,7 @@
 
     async function updateUserStatus(userId, status) {
       try {
-        const res = await fetch(`http://127.0.0.1:3000/api/admin/users/${userId}/status`, {
+        const res = await fetch(`/api/admin/users/${userId}/status`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ status })

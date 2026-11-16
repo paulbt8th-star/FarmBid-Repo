@@ -337,7 +337,7 @@
 
     // Fetch Admin Notifications
     try {
-      const resNotif = await fetch('http://127.0.0.1:3000/api/admin/notifications');
+      const resNotif = await fetch('/api/admin/notifications');
       const notifResult = await resNotif.json();
       const isRead = localStorage.getItem('farmbid_admin_notifications_read') === 'true';
 
@@ -367,7 +367,7 @@
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:3000/api/dashboard/admin');
+      const res = await fetch('/api/dashboard/admin');
       const result = await res.json();
 
       if (!res.ok || !result.success) throw new Error(result.message);
