@@ -809,7 +809,7 @@ def simulate_credit():
     try:
         data = request.get_json() or {}
         buyer_id = data.get('buyerId')
-        amount = float(data.get('amount') or 0)
+        amount = float(data.get('amount', 0))
         
         if not buyer_id or amount <= 0:
             return jsonify({'success': False, 'message': 'Invalid buyer ID or amount.'}), 400
@@ -817,23 +817,35 @@ def simulate_credit():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
-        # 1. Ensure wallet exists for this buyer, or create it
+        # 1. Check if wallet exists for this user
         cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
         
         if not wallet:
+            # Create wallet if it doesn't exist yet
             cursor.execute(
                 "INSERT INTO wallets (user_id, wallet_balance, available_balance, committed_balance) VALUES (%s, %s, %s, 0.00)",
                 (buyer_id, amount, amount)
             )
         else:
+            # Update existing wallet balance
             new_balance = float(wallet.get('wallet_balance', 0) or 0) + amount
             cursor.execute(
                 "UPDATE wallets SET wallet_balance = %s, available_balance = %s WHERE user_id = %s",
                 (new_balance, new_balance, buyer_id)
             )
             
-        # 2. Log the transaction if wallet_transactions table exists
+        # 2. Also keep users table in sync if it has wallet_balance
+        try:
+            cursor.execute("""
+                UPDATE users 
+                SET wallet_balance = COALESCE(wallet_balance, 0) + %s 
+                WHERE id = %s OR user_id = %s
+            """, (amount, buyer_id, buyer_id))
+        except Exception:
+            pass
+
+        # 3. Log the transaction
         try:
             ref_code = f"GCASH-SIM-{os.urandom(3).hex().upper()}"
             cursor.execute(
@@ -841,10 +853,10 @@ def simulate_credit():
                 (buyer_id, ref_code, amount, f"GCash Top-up of ₱{amount:,.2f}")
             )
         except Exception:
-            pass # Skip if transaction log table isn't created yet
+            pass
 
         connection.commit()
-        return jsonify({'success': True, 'message': 'Credit added successfully.'}), 200
+        return jsonify({'success': True, 'message': 'Wallet credited successfully!'}), 200
 
     except Exception as e:
         if connection: connection.rollback()
