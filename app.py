@@ -42,105 +42,34 @@ def place_bid():
     cursor = None
     try:
         data = request.get_json()
-        listing_id = data.get('listingId')
-        bidder_id = data.get('bidderId')
-        bid_amount = float(data.get('bidAmount', 0))
-        
-        if not listing_id or not bidder_id or bid_amount <= 0:
-            return jsonify({'success': False, 'message': 'Invalid bid parameters.'}), 400
-            
+        buyer_id = data.get('buyerId') or session.get('user_id')
+        auction_id = data.get('auctionId')
+        bid_amount = float(data.get('amount', 0))
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # 1. Fetch listing details
-        cursor.execute("""
-            SELECT farmer_id, starting_price, current_highest_bid, auction_status, auction_ends_at 
-            FROM livestock_listings 
-            WHERE listing_id = %s
-        """, (listing_id,))
-        listing = cursor.fetchone()
-        
-        if not listing:
-            return jsonify({'success': False, 'message': 'Auction listing not found.'}), 404
-            
-        if str(listing['farmer_id']) == str(bidder_id):
-            return jsonify({'success': False, 'message': 'Action prohibited: Farmers cannot place bids on their own livestock listings.'}), 400
-            
-        status = str(listing['auction_status']).lower()
-        if status not in ['active', 'live']:
-            return jsonify({'success': False, 'message': 'This auction is closed and no longer accepting bids.'}), 400
-            
-        current_highest = float(listing['current_highest_bid'] or listing['starting_price'] or 0)
-        if bid_amount <= current_highest:
-            return jsonify({'success': False, 'message': f'Bid must be higher than current highest bid of ₱{current_highest:,.2f}.'}), 400
-            
-        # 2. Check Bidder Wallet Balance & Available Funds (Escrow Calculation)
-        cursor.execute("SELECT wallet_balance FROM users WHERE user_id = %s", (bidder_id,))
-        user_row = cursor.fetchone()
-        wallet_balance = float(user_row['wallet_balance']) if user_row and user_row['wallet_balance'] is not None else 0.0
 
-        # Fetch all user bids to compute current active escrow commitments
-        cursor.execute("""
-            SELECT b.bid_amount, l.listing_id, l.current_highest_bid, l.auction_status, l.auction_ends_at
-            FROM bids b
-            JOIN livestock_listings l ON b.listing_id = l.listing_id
-            WHERE b.bidder_id = %s
-        """, (bidder_id,))
-        user_bids = cursor.fetchall()
+        # Check user's current wallet balance
+        cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
+        wallet = cursor.fetchone()
+        balance = float(wallet['wallet_balance']) if wallet else 0.00
 
-        listings_map = {}
-        for b in user_bids:
-            lid = b['listing_id']
-            if lid not in listings_map:
-                listings_map[lid] = {'user_bids': [], 'is_closed': False}
-            listings_map[lid]['user_bids'].append(float(b['bid_amount']))
-            if str(b['auction_status']).lower() in ['ended', 'closed', 'completed']:
-                listings_map[lid]['is_closed'] = True
+        if balance < bid_amount:
+            return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
-        committed_funds = 0.0
-        for lid, item in listings_map.items():
-            # If this listing is being updated with a new bid, we replace its commitment with the new bid amount
-            if lid == int(listing_id):
-                continue
-            if not item['is_closed'] and item['user_bids']:
-                committed_funds += max(item['user_bids'])
-
-        # Add the new bid into escrow commitment
-        committed_funds += bid_amount
-        available_funds = max(0.0, wallet_balance - committed_funds)
-
-        if available_funds < 0 or bid_amount > (wallet_balance - (committed_funds - bid_amount)):
-            return jsonify({
-                'success': False,
-                'message': f'Insufficient available wallet balance for escrow lock! Please top up.'
-            }), 400
-
-        # 3. Insert new bid & update listing highest bid (Outbidding previous leader automatically releases their escrow)
-        cursor.execute("""
-            INSERT INTO bids (listing_id, bidder_id, bid_amount)
-            VALUES (%s, %s, %s)
-        """, (listing_id, bidder_id, bid_amount))
-        
-        cursor.execute("""
-            UPDATE livestock_listings 
-            SET current_highest_bid = %s 
-            WHERE listing_id = %s
-        """, (bid_amount, listing_id))
-        
-        connection.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Bid placed and funds locked in escrow successfully!'
-        }), 201
+        # Proceed with inserting the bid and locking escrow funds...
+        # (Keep your existing bid insertion and response logic here)
 
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
         print("Place Bid Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
         
 # 2. Get All Bids by a Specific Bidder (Fixes 404 error)
 @app.route('/api/bids/bidder/<int:bidder_id>', methods=['GET'])
