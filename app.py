@@ -50,7 +50,14 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Check user's current wallet balance
+        # 1. Check if auction is still active FIRST
+        cursor.execute("SELECT status, ends_at FROM auctions WHERE auction_id = %s", (auction_id,))
+        auction = cursor.fetchone()
+
+        if not auction or auction['status'] != 'active':
+            return jsonify({'success': False, 'message': 'This auction has ended. Bidding is closed.'}), 400
+
+        # 2. Check user's current wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
         balance = float(wallet['wallet_balance']) if wallet else 0.00
@@ -71,7 +78,7 @@ def place_bid():
             cursor.close()
         if connection:
             connection.close()
-        
+
 # 2. Get All Bids by a Specific Bidder (Fixes 404 error)
 @app.route('/api/bids/bidder/<int:bidder_id>', methods=['GET'])
 def get_bids_by_bidder(bidder_id):
