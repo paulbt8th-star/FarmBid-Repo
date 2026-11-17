@@ -753,7 +753,7 @@ def get_all_listings():
                 if item.get('created_at') and isinstance(item['created_at'], datetime):
                     item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-                # Resolve Images dynamically supporting absolute URLs and local files
+                # Resolve Images dynamically (stripping local IP prefixes if present)
                 img_val = item.get('image_url')
                 resolved_images = []
                 
@@ -763,14 +763,17 @@ def get_all_listings():
                         for img in parsed:
                             if img:
                                 img_str = str(img).strip('"[]\'')
-                                if img_str.startswith('http://') or img_str.startswith('https://'):
-                                    resolved_images.append(img_str)
+                                # Strip local IP/localhost prefix so it uses the live domain/relative path
+                                clean_img = img_str.replace('http://127.0.0.1:3000', '').replace('http://localhost:3000', '')
+                                
+                                if clean_img.startswith('http://') or clean_img.startswith('https://'):
+                                    resolved_images.append(clean_img)
                                 else:
-                                    clean_filename = os.path.basename(img_str)
-                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                                    if not clean_img.startswith('/'):
+                                        clean_img = '/' + clean_img
+                                    resolved_images.append(clean_img)
                     except:
-                        clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                        pass
                 
                 if not resolved_images:
                     resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -882,30 +885,33 @@ def get_farmer_listings(farmer_id):
             if item.get('created_at') and isinstance(item['created_at'], datetime):
                 item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-            # Resolve Images dynamically supporting absolute URLs and local files
-            img_val = item.get('image_url')
-            resolved_images = []
-            
-            if img_val:
-                try:
-                    parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
-                    for img in parsed:
-                        if img:
-                            img_str = str(img).strip('"[]\'')
-                            if img_str.startswith('http://') or img_str.startswith('https://'):
-                                resolved_images.append(img_str)
-                            else:
-                                clean_filename = os.path.basename(img_str)
-                                resolved_images.append(f"/uploads/livestock/{clean_filename}")
-                except:
-                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
-            
-            if not resolved_images:
-                resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
+           # Resolve Images dynamically (stripping local IP prefixes if present)
+                img_val = item.get('image_url')
+                resolved_images = []
                 
-            item['images'] = resolved_images
-            item['image_url'] = resolved_images[0]
+                if img_val:
+                    try:
+                        parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
+                        for img in parsed:
+                            if img:
+                                img_str = str(img).strip('"[]\'')
+                                # Strip local IP/localhost prefix so it uses the live domain/relative path
+                                clean_img = img_str.replace('http://127.0.0.1:3000', '').replace('http://localhost:3000', '')
+                                
+                                if clean_img.startswith('http://') or clean_img.startswith('https://'):
+                                    resolved_images.append(clean_img)
+                                else:
+                                    if not clean_img.startswith('/'):
+                                        clean_img = '/' + clean_img
+                                    resolved_images.append(clean_img)
+                    except:
+                        pass
+                
+                if not resolved_images:
+                    resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
+                    
+                item['images'] = resolved_images
+                item['image_url'] = resolved_images[0]
 
             # Resolve Documents
             doc_val = item.get('documents')
