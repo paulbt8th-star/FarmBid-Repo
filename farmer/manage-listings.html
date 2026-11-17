@@ -313,8 +313,8 @@
     // Fetch Real-time Notifications & Listings
     try {
       const [resListings, resNotif] = await Promise.all([
-        fetch(`http://127.0.0.1:3000/api/listings/farmer/${farmerId}`),
-        fetch(`http://127.0.0.1:3000/api/farmer/notifications/${farmerId}`)
+        fetch(`/api/listings/farmer/${farmerId}`),
+        fetch(`/api/farmer/notifications/${farmerId}`)
       ]);
 
       const result = await resListings.json();

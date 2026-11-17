@@ -178,8 +178,8 @@
     // 2. Fetch Real-time Farmer Notifications & Deliveries
     try {
       const [resQueue, resNotif] = await Promise.all([
-        fetch(`http://127.0.0.1:3000/api/farmer/delivery-queue/${farmerId}`),
-        fetch(`http://127.0.0.1:3000/api/farmer/notifications/${farmerId}`)
+        fetch(`/api/farmer/delivery-queue/${farmerId}`),
+        fetch(`/api/farmer/notifications/${farmerId}`)
       ]);
 
       const result = await resQueue.json();

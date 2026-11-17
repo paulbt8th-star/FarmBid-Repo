@@ -310,7 +310,7 @@
             formData.append('images', file);
           });
 
-          const uploadRes = await fetch('http://127.0.0.1:3000/api/upload-livestock-images', {
+          const uploadRes = await fetch('/api/upload-livestock-images', {
             method: 'POST',
             body: formData
           });
@@ -338,7 +338,7 @@
             docFormData.append('images', doc);
           });
 
-          const docUploadRes = await fetch('http://127.0.0.1:3000/api/upload-livestock-images', {
+          const docUploadRes = await fetch('/api/upload-livestock-images', {
             method: 'POST',
             body: docFormData
           });
@@ -373,7 +373,7 @@
           documents: uploadedDocUrls
         };
 
-        const response = await fetch('http://127.0.0.1:3000/api/listings', {
+        const response = await fetch('/api/listings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(listingData)

@@ -276,7 +276,7 @@
         const gcashNumber = document.getElementById('gcashNumberInput').value;
 
         try {
-          const res = await fetch('http://127.0.0.1:3000/api/farmer/withdraw', {
+          const res = await fetch('/api/farmer/withdraw', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ farmerId, amount, gcashNumber })
@@ -297,9 +297,9 @@
 
     try {
       const [walletRes, queueRes, notifRes] = await Promise.all([
-        fetch(`http://127.0.0.1:3000/api/farmer/wallet/${farmerId}`),
-        fetch(`http://127.0.0.1:3000/api/farmer/delivery-queue/${farmerId}`),
-        fetch(`http://127.0.0.1:3000/api/farmer/notifications/${farmerId}`)
+        fetch(`/api/farmer/wallet/${farmerId}`),
+        fetch(`/api/farmer/delivery-queue/${farmerId}`),
+        fetch(`/api/farmer/notifications/${farmerId}`)
       ]);
 
       const walletResult = await walletRes.json();
