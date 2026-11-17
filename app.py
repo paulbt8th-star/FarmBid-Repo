@@ -665,15 +665,11 @@ def update_farmer_settings(farmer_id):
         if connection: connection.close()
 
 # 14. Get Buyer Wallet and Financial Breakdown (Accurate Committed Funds Calculation)
-@app.route('/api/buyer/wallet', methods=['GET'])
-def get_buyer_wallet():
+@app.route('/api/buyer/wallet/<int:buyer_id>', methods=['GET'])
+def get_buyer_wallet(buyer_id):
     connection = None
     cursor = None
     try:
-        buyer_id = request.args.get('buyerId') or session.get('user_id')
-        if not buyer_id:
-            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
