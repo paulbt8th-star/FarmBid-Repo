@@ -807,21 +807,48 @@ def simulate_credit():
     connection = None
     cursor = None
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         buyer_id = data.get('buyerId')
-        amount = float(data.get('amount', 0))
+        amount = float(data.get('amount') or 0)
         
+        if not buyer_id or amount <= 0:
+            return jsonify({'success': False, 'message': 'Invalid buyer ID or amount.'}), 400
+
         connection = get_db_connection()
-        cursor = connection.cursor()
-        cursor.execute("""
-            UPDATE users 
-            SET wallet_balance = COALESCE(wallet_balance, 0) + %s 
-            WHERE user_id = %s
-        """, (amount, buyer_id))
+        cursor = connection.cursor(dictionary=True)
+        
+        # 1. Ensure wallet exists for this buyer, or create it
+        cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (buyer_id,))
+        wallet = cursor.fetchone()
+        
+        if not wallet:
+            cursor.execute(
+                "INSERT INTO wallets (user_id, wallet_balance, available_balance, committed_balance) VALUES (%s, %s, %s, 0.00)",
+                (buyer_id, amount, amount)
+            )
+        else:
+            new_balance = float(wallet.get('wallet_balance', 0) or 0) + amount
+            cursor.execute(
+                "UPDATE wallets SET wallet_balance = %s, available_balance = %s WHERE user_id = %s",
+                (new_balance, new_balance, buyer_id)
+            )
+            
+        # 2. Log the transaction if wallet_transactions table exists
+        try:
+            ref_code = f"GCASH-SIM-{os.urandom(3).hex().upper()}"
+            cursor.execute(
+                "INSERT INTO wallet_transactions (user_id, reference_code, amount, type, description) VALUES (%s, %s, %s, 'topup', %s)",
+                (buyer_id, ref_code, amount, f"GCash Top-up of ₱{amount:,.2f}")
+            )
+        except Exception:
+            pass # Skip if transaction log table isn't created yet
+
         connection.commit()
-        return jsonify({'success': True, 'message': 'Wallet credited successfully!'}), 200
+        return jsonify({'success': True, 'message': 'Credit added successfully.'}), 200
+
     except Exception as e:
         if connection: connection.rollback()
+        print("Simulate Credit Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor: cursor.close()
