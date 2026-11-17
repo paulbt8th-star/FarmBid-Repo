@@ -676,24 +676,16 @@ def get_buyer_wallet(buyer_id):
         # Get wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
-        balance = wallet['wallet_balance'] if wallet else 0.00
+        balance = float(wallet['wallet_balance']) if wallet else 0.00
 
-        # Get transactions
-        cursor.execute(
-            """SELECT transaction_id, amount, type AS transaction_type, 
-                      reference_id AS reference, created_at AS date, 'completed' AS status 
-               FROM wallet_transactions 
-               WHERE user_id = %s 
-               ORDER BY created_at DESC""",
-            (buyer_id,)
-        )
-        transactions = cursor.fetchall()
-
-        # Return 'wallet_balance' to match frontend expectation
+        # Return response wrapped in 'data' to match frontend expectation
         return jsonify({
             'success': True,
-            'wallet_balance': balance,
-            'transactions': transactions
+            'data': {
+                'wallet_balance': balance,
+                'available_funds': balance, # or your specific available calculation
+                'committed_funds': 0.00
+            }
         })
 
     except Exception as e:
