@@ -728,7 +728,7 @@ def simulate_credit():
         if connection:
             connection.close()
 
-# 16. Fetch All Live Livestock Listings
+
 # 16. Fetch All Live Livestock Listings
 @app.route('/api/listings', methods=['GET'])
 def get_all_listings():
@@ -747,13 +747,12 @@ def get_all_listings():
         listings = cursor.fetchall()
         
         for item in listings:
-                # Format datetime objects as plain strings to prevent JSON UTC offsets
                 if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
                     item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
                 if item.get('created_at') and isinstance(item['created_at'], datetime):
                     item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-                # Resolve Images dynamically (stripping local IP prefixes if present)
+                # Foolproof Image Resolution using basename
                 img_val = item.get('image_url')
                 resolved_images = []
                 
@@ -763,17 +762,19 @@ def get_all_listings():
                         for img in parsed:
                             if img:
                                 img_str = str(img).strip('"[]\'')
-                                # Strip local IP/localhost prefix so it uses the live domain/relative path
-                                clean_img = img_str.replace('http://127.0.0.1:3000', '').replace('http://localhost:3000', '')
-                                
-                                if clean_img.startswith('http://') or clean_img.startswith('https://'):
-                                    resolved_images.append(clean_img)
+                                # If it's an external URL (like Unsplash), keep it; otherwise extract clean filename
+                                if img_str.startswith('http://') and '127.0.0.1' not in img_str and 'localhost' not in img_str:
+                                    resolved_images.append(img_str)
+                                elif img_str.startswith('https://'):
+                                    resolved_images.append(img_str)
                                 else:
-                                    if not clean_img.startswith('/'):
-                                        clean_img = '/' + clean_img
-                                    resolved_images.append(clean_img)
+                                    clean_filename = os.path.basename(img_str)
+                                    if clean_filename:
+                                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
                     except:
-                        pass
+                        clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                        if clean_filename:
+                            resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 
                 if not resolved_images:
                     resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -790,10 +791,12 @@ def get_all_listings():
                         for doc in parsed_docs:
                             if doc:
                                 clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
-                                resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
+                                if clean_doc_filename:
+                                    resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                     except:
                         clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
-                        resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
+                        if clean_doc_filename:
+                            resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                 item['documents'] = resolved_docs
 
         return jsonify({
@@ -859,7 +862,7 @@ def create_listing():
         if cursor: cursor.close()
         if connection: connection.close()
 
-# 18. Fetch Listings Created by a Specific Farmer
+
 # 18. Fetch Listings Created by a Specific Farmer
 @app.route('/api/listings/farmer/<int:farmer_id>', methods=['GET'])
 def get_farmer_listings(farmer_id):
@@ -879,39 +882,39 @@ def get_farmer_listings(farmer_id):
         listings = cursor.fetchall()
 
         for item in listings:
-            # Format datetime objects as plain strings to prevent JSON UTC offsets
             if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
                 item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
             if item.get('created_at') and isinstance(item['created_at'], datetime):
                 item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-           # Resolve Images dynamically (stripping local IP prefixes if present)
-                img_val = item.get('image_url')
-                resolved_images = []
+            # Foolproof Image Resolution using basename
+            img_val = item.get('image_url')
+            resolved_images = []
+            
+            if img_val:
+                try:
+                    parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
+                    for img in parsed:
+                        if img:
+                            img_str = str(img).strip('"[]\'')
+                            if img_str.startswith('http://') and '127.0.0.1' not in img_str and 'localhost' not in img_str:
+                                resolved_images.append(img_str)
+                            elif img_str.startswith('https://'):
+                                resolved_images.append(img_str)
+                            else:
+                                clean_filename = os.path.basename(img_str)
+                                if clean_filename:
+                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                except:
+                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                    if clean_filename:
+                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
+            
+            if not resolved_images:
+                resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
                 
-                if img_val:
-                    try:
-                        parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
-                        for img in parsed:
-                            if img:
-                                img_str = str(img).strip('"[]\'')
-                                # Strip local IP/localhost prefix so it uses the live domain/relative path
-                                clean_img = img_str.replace('http://127.0.0.1:3000', '').replace('http://localhost:3000', '')
-                                
-                                if clean_img.startswith('http://') or clean_img.startswith('https://'):
-                                    resolved_images.append(clean_img)
-                                else:
-                                    if not clean_img.startswith('/'):
-                                        clean_img = '/' + clean_img
-                                    resolved_images.append(clean_img)
-                    except:
-                        pass
-                
-                if not resolved_images:
-                    resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
-                    
-                item['images'] = resolved_images
-                item['image_url'] = resolved_images[0]
+            item['images'] = resolved_images
+            item['image_url'] = resolved_images[0]
 
             # Resolve Documents
             doc_val = item.get('documents')
@@ -922,10 +925,12 @@ def get_farmer_listings(farmer_id):
                     for doc in parsed_docs:
                         if doc:
                             clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
-                            resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
+                            if clean_doc_filename:
+                                resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                 except:
                     clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
-                    resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
+                    if clean_doc_filename:
+                        resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
             item['documents'] = resolved_docs
 
         return jsonify({
