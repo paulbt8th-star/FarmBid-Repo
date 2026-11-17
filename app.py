@@ -44,7 +44,7 @@ def place_bid():
     try:
         data = request.get_json()
         buyer_id = data.get('buyerId') or session.get('user_id')
-        auction_id = data.get('auctionId')
+        listing_id = data.get('auctionId') or data.get('listingId')
         bid_amount = float(data.get('amount', 0))
 
         connection = get_db_connection()
@@ -58,11 +58,11 @@ def place_bid():
         if balance < bid_amount:
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
-        # 2. Insert the bid into the bids table
+        # 2. Insert the bid using listing_id
         cursor.execute(
-            """INSERT INTO bids (auction_id, user_id, bid_amount, created_at) 
+            """INSERT INTO bids (listing_id, user_id, bid_amount, created_at) 
                VALUES (%s, %s, %s, NOW())""",
-            (auction_id, buyer_id, bid_amount)
+            (listing_id, buyer_id, bid_amount)
         )
         connection.commit()
 
