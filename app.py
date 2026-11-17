@@ -50,8 +50,8 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Check if auction is still active FIRST
-        cursor.execute("SELECT status, ends_at FROM auctions WHERE auction_id = %s", (auction_id,))
+        # 1. Check if livestock listing is still active FIRST
+        cursor.execute("SELECT status, ends_at FROM livestock_listings WHERE auction_id = %s", (auction_id,))
         auction = cursor.fetchone()
 
         if not auction or auction['status'] != 'active':
