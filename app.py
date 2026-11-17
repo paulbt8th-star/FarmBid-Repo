@@ -50,18 +50,7 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Check if listing exists and hasn't expired using 'ends_at'
-        cursor.execute("SELECT ends_at FROM livestock_listings WHERE auction_id = %s", (auction_id,))
-        auction = cursor.fetchone()
-
-        if not auction:
-            return jsonify({'success': False, 'message': 'Auction listing not found.'}), 404
-
-        # Check if expiration time has passed
-        if auction['ends_at'] and auction['ends_at'] < datetime.now():
-            return jsonify({'success': False, 'message': 'This auction has ended. Bidding is closed.'}), 400
-
-        # 2. Check user's current wallet balance
+        # 1. Check user's current wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
         balance = float(wallet['wallet_balance']) if wallet else 0.00
@@ -69,8 +58,15 @@ def place_bid():
         if balance < bid_amount:
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
-        # Proceed with inserting the bid and locking escrow funds...
-        # (Keep your existing bid insertion and response logic here)
+        # 2. Insert the bid into the bids table
+        cursor.execute(
+            """INSERT INTO bids (auction_id, user_id, bid_amount, created_at) 
+               VALUES (%s, %s, %s, NOW())""",
+            (auction_id, buyer_id, bid_amount)
+        )
+        connection.commit()
+
+        return jsonify({'success': True, 'message': 'Bid placed successfully!'})
 
     except Exception as e:
         if connection:
