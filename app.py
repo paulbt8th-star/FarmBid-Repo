@@ -807,64 +807,54 @@ def simulate_credit():
     connection = None
     cursor = None
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
         buyer_id = data.get('buyerId')
         amount = float(data.get('amount', 0))
-        
+
         if not buyer_id or amount <= 0:
             return jsonify({'success': False, 'message': 'Invalid buyer ID or amount.'}), 400
 
-        connection = get_db_connection()
+        connection = get_db_connection() # Use your app's existing db connection helper
         cursor = connection.cursor(dictionary=True)
-        
+
         # 1. Check if wallet exists for this user
         cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
-        
-        if not wallet:
-            # Create wallet if it doesn't exist yet
+
+        if wallet:
+            # Update existing wallet balance
             cursor.execute(
-                "INSERT INTO wallets (user_id, wallet_balance, available_balance, committed_balance) VALUES (%s, %s, %s, 0.00)",
-                (buyer_id, amount, amount)
+                "UPDATE wallets SET wallet_balance = wallet_balance + %s WHERE user_id = %s",
+                (amount, buyer_id)
             )
         else:
-            # Update existing wallet balance
-            new_balance = float(wallet.get('wallet_balance', 0) or 0) + amount
+            # Create wallet if it doesn't exist yet
             cursor.execute(
-                "UPDATE wallets SET wallet_balance = %s, available_balance = %s WHERE user_id = %s",
-                (new_balance, new_balance, buyer_id)
+                "INSERT INTO wallets (user_id, wallet_balance) VALUES (%s, %s)",
+                (buyer_id, amount)
             )
-            
-        # 2. Also keep users table in sync if it has wallet_balance
-        try:
-            cursor.execute("""
-                UPDATE users 
-                SET wallet_balance = COALESCE(wallet_balance, 0) + %s 
-                WHERE id = %s OR user_id = %s
-            """, (amount, buyer_id, buyer_id))
-        except Exception:
-            pass
 
-        # 3. Log the transaction
-        try:
-            ref_code = f"GCASH-SIM-{os.urandom(3).hex().upper()}"
-            cursor.execute(
-                "INSERT INTO wallet_transactions (user_id, reference_code, amount, type, description) VALUES (%s, %s, %s, 'topup', %s)",
-                (buyer_id, ref_code, amount, f"GCash Top-up of ₱{amount:,.2f}")
-            )
-        except Exception:
-            pass
+        # 2. Log the transaction
+        cursor.execute(
+            """INSERT INTO wallet_transactions 
+               (user_id, amount, transaction_type, reference, status, created_at) 
+               VALUES (%s, %s, 'topup', 'TXN-GCASH-TEST', 'completed', NOW())""",
+            (buyer_id, amount)
+        )
 
         connection.commit()
-        return jsonify({'success': True, 'message': 'Wallet credited successfully!'}), 200
+        return jsonify({'success': True, 'message': 'Top-up successful'})
 
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
         print("Simulate Credit Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 16. Fetch All Live Livestock Listings
 @app.route('/api/listings', methods=['GET'])
