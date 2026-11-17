@@ -58,9 +58,9 @@ def place_bid():
         if balance < bid_amount:
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
-        # 2. Insert the bid using buyer_id instead of user_id
+        # 2. Insert the bid using user_id
         cursor.execute(
-            """INSERT INTO bids (listing_id, buyer_id, bid_amount, created_at) 
+            """INSERT INTO bids (listing_id, user_id, bid_amount, created_at) 
                VALUES (%s, %s, %s, NOW())""",
             (listing_id, buyer_id, bid_amount)
         )
