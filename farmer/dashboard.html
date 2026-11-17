@@ -314,11 +314,11 @@
 
     try {
       // 1. Fetch live wallet & pending settlement data
-      const resWallet = await fetch(`http://127.0.0.1:3000/api/farmer/wallet/${farmerId}`);
+      const resWallet = await fetch(`/api/farmer/wallet/${farmerId}`);
       const resultWallet = await resWallet.json();
 
       // Fetch delivery queue items
-      const resQueue = await fetch(`http://127.0.0.1:3000/api/farmer/delivery-queue/${farmerId}`);
+      const resQueue = await fetch(`/api/farmer/delivery-queue/${farmerId}`);
       const resultQueue = await resQueue.json();
 
       if (resWallet.ok && resultWallet.success) {
@@ -353,7 +353,7 @@
       }
 
       // 2. Fetch live metrics (Highest Bid, Verification Queue, Completed Count)
-      const resMetrics = await fetch(`http://127.0.0.1:3000/api/farmer/metrics/${farmerId}`);
+      const resMetrics = await fetch(`/api/farmer/metrics/${farmerId}`);
       const resultMetrics = await resMetrics.json();
 
       if (resMetrics.ok && resultMetrics.success) {
@@ -370,7 +370,7 @@
       }
 
       // 3. Fetch Active Bid Status Card Data
-      const resActiveBid = await fetch(`http://127.0.0.1:3000/api/farmer/active-bid/${farmerId}`);
+      const resActiveBid = await fetch(`/api/farmer/active-bid/${farmerId}`);
       const resultActiveBid = await resActiveBid.json();
 
       const cardTitleEl = document.getElementById('activeCardTitle');
@@ -463,7 +463,7 @@
 
     // 6. Fetch Farmer Notifications
     try {
-      const resNotif = await fetch(`http://127.0.0.1:3000/api/farmer/notifications/${farmerId}`);
+      const resNotif = await fetch(`/api/farmer/notifications/${farmerId}`);
       const resNotifData = await resNotif.json();
       const isRead = localStorage.getItem('farmbid_farmer_notifications_read') === 'true';
 
