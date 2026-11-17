@@ -814,31 +814,29 @@ def simulate_credit():
         if not buyer_id or amount <= 0:
             return jsonify({'success': False, 'message': 'Invalid buyer ID or amount.'}), 400
 
-        connection = get_db_connection() # Use your app's existing db connection helper
+        connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Check if wallet exists for this user
+        # 1. Update or create wallet balance
         cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
 
         if wallet:
-            # Update existing wallet balance
             cursor.execute(
                 "UPDATE wallets SET wallet_balance = wallet_balance + %s WHERE user_id = %s",
                 (amount, buyer_id)
             )
         else:
-            # Create wallet if it doesn't exist yet
             cursor.execute(
                 "INSERT INTO wallets (user_id, wallet_balance) VALUES (%s, %s)",
                 (buyer_id, amount)
             )
 
-        # 2. Log the transaction
+        # 2. Log transaction matching the exact table schema
         cursor.execute(
             """INSERT INTO wallet_transactions 
-               (user_id, amount, transaction_type, reference, status, created_at) 
-               VALUES (%s, %s, 'topup', 'TXN-GCASH-TEST', 'completed', NOW())""",
+               (user_id, amount, type, reference_id, created_at) 
+               VALUES (%s, %s, 'credit', NULL, NOW())""",
             (buyer_id, amount)
         )
 
