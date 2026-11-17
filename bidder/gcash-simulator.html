@@ -62,7 +62,7 @@
           alert('GCash Payment Successful! Redirecting back to FarmBid...');
           window.location.href = `wallet.html?topup=success`;
         } else {
-          alert('Payment processing failed.');
+          alert('Payment processing failed: ' + (result.message || 'Unknown error'));
         }
       } catch (err) {
         console.error(err);
