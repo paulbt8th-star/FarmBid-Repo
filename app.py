@@ -665,116 +665,48 @@ def update_farmer_settings(farmer_id):
         if connection: connection.close()
 
 # 14. Get Buyer Wallet and Financial Breakdown (Accurate Committed Funds Calculation)
-@app.route('/api/buyer/wallet/<int:buyer_id>', methods=['GET'])
-def get_buyer_wallet(buyer_id):
+@app.route('/api/buyer/wallet', methods=['GET'])
+def get_buyer_wallet():
     connection = None
     cursor = None
     try:
+        buyer_id = request.args.get('buyerId') or session.get('user_id')
+        if not buyer_id:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # Force status update for any past-due auctions
-        cursor.execute("""
-            UPDATE livestock_listings 
-            SET auction_status = 'ended' 
-            WHERE auction_ends_at IS NOT NULL AND auction_ends_at <= NOW() AND auction_status IN ('active', 'live')
-        """)
-        connection.commit()
-        
-        cursor.execute("SELECT user_id, first_name, last_name, email, gcash_number, wallet_balance FROM users WHERE user_id = %s", (buyer_id,))
-        user = cursor.fetchone()
-        
-        if not user:
-            return jsonify({'success': False, 'message': 'Buyer not found'}), 404
-            
-        wallet_balance = float(user['wallet_balance']) if user['wallet_balance'] is not None else 0.00
-        
-        cursor.execute("""
-            SELECT b.bid_id, b.bid_amount, l.listing_id, l.animal_type, l.weight, l.starting_price, l.current_highest_bid, l.auction_status, l.auction_ends_at
-            FROM bids b
-            JOIN livestock_listings l ON b.listing_id = l.listing_id
-            WHERE b.bidder_id = %s
-        """, (buyer_id,))
-        bids = cursor.fetchall()
 
-        cursor.execute("""
-            SELECT COALESCE(SUM(b.bid_amount), 0) as total_paid
-            FROM bids b
-            JOIN livestock_listings l ON b.listing_id = l.listing_id
-            WHERE b.bidder_id = %s AND l.auction_status = 'completed'
-        """, (buyer_id,))
-        paid_res = cursor.fetchone()
-        total_paid = float(paid_res['total_paid'] or 0)
-        
-        now = datetime.now()
-        
-        listings_map = {}
-        for b in bids:
-            lid = b['listing_id']
-            if lid not in listings_map:
-                listings_map[lid] = {
-                    'listing_id': lid,
-                    'animal_type': b['animal_type'],
-                    'weight': b['weight'],
-                    'starting_price': float(b['starting_price'] or 0),
-                    'current_highest_bid': float(b['current_highest_bid'] or 0),
-                    'auction_status': str(b['auction_status'] or 'live').lower(),
-                    'auction_ends_at': b['auction_ends_at'],
-                    'user_bids': []
-                }
-            listings_map[lid]['user_bids'].append(float(b['bid_amount']))
-            
-        committed_funds = 0.0
-        
-        for lid, item in listings_map.items():
-            highest_user_bid = max(item['user_bids']) if item['user_bids'] else 0.0
-            
-            ends_at = item['auction_ends_at']
-            is_expired = False
-            if ends_at:
-                if isinstance(ends_at, str):
-                    try:
-                        ends_at_dt = datetime.fromisoformat(ends_at.replace(' ', 'T'))
-                        if now > ends_at_dt:
-                            is_expired = True
-                    except:
-                        pass
-                elif isinstance(ends_at, datetime):
-                    if now > ends_at:
-                        is_expired = True
-                        
-            is_completed = item['auction_status'] == 'completed'
-            is_closed = is_expired or item['auction_status'] in ['ended', 'closed', 'completed']
-            is_winning = is_closed and (highest_user_bid >= item['current_highest_bid'])
-            
-            # CRITICAL: If the auction is completed, funds are already paid/settled, so committed funds = 0.
-            if not is_completed:
-                if not is_closed:
-                    committed_funds += highest_user_bid
-                elif is_closed and is_winning:
-                    committed_funds += highest_user_bid
-                
-        available_funds = max(0.0, wallet_balance - committed_funds)
-        
+        # Get wallet balance
+        cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
+        wallet = cursor.fetchone()
+        balance = wallet['wallet_balance'] if wallet else 0.00
+
+        # Get transactions with correct JSON aliases for frontend
+        cursor.execute(
+            """SELECT transaction_id, amount, type AS transaction_type, 
+                      reference_id AS reference, created_at AS date, 'completed' AS status 
+               FROM wallet_transactions 
+               WHERE user_id = %s 
+               ORDER BY created_at DESC""",
+            (buyer_id,)
+        )
+        transactions = cursor.fetchall()
+
         return jsonify({
             'success': True,
-            'data': {
-                'user_name': f"{user['first_name']} {user['last_name']}",
-                'email': user['email'],
-                'gcash_number': user['gcash_number'] or '09171234567',
-                'wallet_balance': wallet_balance,
-                'committed_funds': committed_funds,
-                'available_funds': available_funds,
-                'bids': bids
-            }
-        }), 200
+            'balance': balance,
+            'transactions': transactions
+        })
 
     except Exception as e:
-        print("Buyer Wallet API Error:", str(e))
+        print("Get Wallet Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 15. Top up Buyer Wallet via Simulated GCash Checkout
 @app.route('/api/buyer/topup-gcash', methods=['POST'])
