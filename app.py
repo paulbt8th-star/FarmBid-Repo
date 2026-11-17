@@ -729,6 +729,7 @@ def simulate_credit():
             connection.close()
 
 # 16. Fetch All Live Livestock Listings
+# 16. Fetch All Live Livestock Listings
 @app.route('/api/listings', methods=['GET'])
 def get_all_listings():
     connection = None
@@ -752,7 +753,7 @@ def get_all_listings():
                 if item.get('created_at') and isinstance(item['created_at'], datetime):
                     item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-                # Resolve Images with physical file existence check
+                # Resolve Images dynamically supporting absolute URLs and local files
                 img_val = item.get('image_url')
                 resolved_images = []
                 
@@ -761,12 +762,15 @@ def get_all_listings():
                         parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
                         for img in parsed:
                             if img:
-                                clean_filename = os.path.basename(str(img).strip('"[]\''))
-                                physical_path = os.path.join(app.root_path, 'uploads', 'livestock', clean_filename)
-                                if os.path.exists(physical_path):
+                                img_str = str(img).strip('"[]\'')
+                                if img_str.startswith('http://') or img_str.startswith('https://'):
+                                    resolved_images.append(img_str)
+                                else:
+                                    clean_filename = os.path.basename(img_str)
                                     resolved_images.append(f"/uploads/livestock/{clean_filename}")
                     except:
-                        pass
+                        clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 
                 if not resolved_images:
                     resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -853,6 +857,7 @@ def create_listing():
         if connection: connection.close()
 
 # 18. Fetch Listings Created by a Specific Farmer
+# 18. Fetch Listings Created by a Specific Farmer
 @app.route('/api/listings/farmer/<int:farmer_id>', methods=['GET'])
 def get_farmer_listings(farmer_id):
     connection = None
@@ -877,7 +882,7 @@ def get_farmer_listings(farmer_id):
             if item.get('created_at') and isinstance(item['created_at'], datetime):
                 item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-            # Resolve Images with physical file existence check
+            # Resolve Images dynamically supporting absolute URLs and local files
             img_val = item.get('image_url')
             resolved_images = []
             
@@ -886,12 +891,15 @@ def get_farmer_listings(farmer_id):
                     parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
                     for img in parsed:
                         if img:
-                            clean_filename = os.path.basename(str(img).strip('"[]\''))
-                            physical_path = os.path.join(app.root_path, 'uploads', 'livestock', clean_filename)
-                            if os.path.exists(physical_path):
+                            img_str = str(img).strip('"[]\'')
+                            if img_str.startswith('http://') or img_str.startswith('https://'):
+                                resolved_images.append(img_str)
+                            else:
+                                clean_filename = os.path.basename(img_str)
                                 resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 except:
-                    pass
+                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
             
             if not resolved_images:
                 resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
