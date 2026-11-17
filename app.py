@@ -678,7 +678,7 @@ def get_buyer_wallet(buyer_id):
         wallet = cursor.fetchone()
         balance = wallet['wallet_balance'] if wallet else 0.00
 
-        # Get transactions with correct JSON aliases for frontend
+        # Get transactions
         cursor.execute(
             """SELECT transaction_id, amount, type AS transaction_type, 
                       reference_id AS reference, created_at AS date, 'completed' AS status 
@@ -689,9 +689,10 @@ def get_buyer_wallet(buyer_id):
         )
         transactions = cursor.fetchall()
 
+        # Return 'wallet_balance' to match frontend expectation
         return jsonify({
             'success': True,
-            'balance': balance,
+            'wallet_balance': balance,
             'transactions': transactions
         })
 
