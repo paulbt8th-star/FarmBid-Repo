@@ -50,11 +50,15 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Check if livestock listing is still active FIRST
-        cursor.execute("SELECT status, ends_at FROM livestock_listings WHERE auction_id = %s", (auction_id,))
+        # 1. Check if listing exists and hasn't expired using 'ends_at'
+        cursor.execute("SELECT ends_at FROM livestock_listings WHERE auction_id = %s", (auction_id,))
         auction = cursor.fetchone()
 
-        if not auction or auction['status'] != 'active':
+        if not auction:
+            return jsonify({'success': False, 'message': 'Auction listing not found.'}), 404
+
+        # Check if expiration time has passed
+        if auction['ends_at'] and auction['ends_at'] < datetime.now():
             return jsonify({'success': False, 'message': 'This auction has ended. Bidding is closed.'}), 400
 
         # 2. Check user's current wallet balance
