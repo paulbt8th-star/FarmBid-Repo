@@ -789,7 +789,7 @@ def topup_buyer_gcash():
             return jsonify({'success': False, 'message': 'Invalid top-up amount.'}), 400
             
         # Return URL to our built-in simulation checkout page
-        simulator_url = f"http://127.0.0.1:5500/bidder/gcash-simulator.html?buyerId={buyer_id}&amount={amount}&gcash={gcash_number}"
+        simulator_url = f"/bidder/gcash-simulator.html?buyerId={buyer_id}&amount={amount}&gcash={gcash_number}"
         
         return jsonify({
             'success': True,
@@ -900,10 +900,10 @@ def get_all_listings():
                         for img in parsed:
                             if img:
                                 clean_filename = os.path.basename(str(img).strip('"[]\''))
-                                resolved_images.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_filename}")
+                                resolved_images.append(f"/uploads/livestock/{clean_filename}")
                     except:
                         clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                        resolved_images.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_filename}")
+                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 
                 if not resolved_images:
                     resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -920,10 +920,10 @@ def get_all_listings():
                         for doc in parsed_docs:
                             if doc:
                                 clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
-                                resolved_docs.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_doc_filename}")
+                                resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                     except:
                         clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
-                        resolved_docs.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_doc_filename}")
+                        resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                 item['documents'] = resolved_docs
 
         return jsonify({
@@ -1024,10 +1024,10 @@ def get_farmer_listings(farmer_id):
                     for img in parsed:
                         if img:
                             clean_filename = os.path.basename(str(img).strip('"[]\''))
-                            resolved_images.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_filename}")
+                            resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 except:
                     clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                    resolved_images.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_filename}")
+                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
             
             if not resolved_images:
                 resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -1044,10 +1044,10 @@ def get_farmer_listings(farmer_id):
                     for doc in parsed_docs:
                         if doc:
                             clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
-                            resolved_docs.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_doc_filename}")
+                            resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
                 except:
                     clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
-                    resolved_docs.append(f"http://127.0.0.1:3000/uploads/livestock/{clean_doc_filename}")
+                    resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
             item['documents'] = resolved_docs
 
         return jsonify({
@@ -1088,7 +1088,7 @@ def upload_livestock_images():
                 file.save(file_path)
                 
                 # Generate accessible URL route
-                file_url = f"http://127.0.0.1:3000/uploads/livestock/{unique_name}"
+                file_url = f"/uploads/livestock/{unique_name}"
                 saved_urls.append(file_url)
                 
         return jsonify({
