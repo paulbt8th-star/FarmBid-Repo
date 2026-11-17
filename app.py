@@ -37,6 +37,7 @@ def get_db_connection():
     )
 
 # 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
+# 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
 @app.route('/api/bids', methods=['POST'])
 def place_bid():
     connection = None
@@ -58,12 +59,27 @@ def place_bid():
         if balance < bid_amount:
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
-        # 2. Insert the bid using the exact columns: listing_id and bidder_id
+        # 2. Check current highest bid or starting price on the listing
+        cursor.execute("SELECT current_highest_bid, starting_price FROM livestock_listings WHERE listing_id = %s", (listing_id,))
+        listing = cursor.fetchone()
+        if listing:
+            current_top = float(listing.get('current_highest_bid') or listing.get('starting_price') or 0)
+            if bid_amount <= current_top:
+                return jsonify({'success': False, 'message': f'Bid must be higher than current highest bid (₱{current_top:,.2f}).'}), 400
+
+        # 3. Insert the bid using the exact columns: listing_id and bidder_id
         cursor.execute(
             """INSERT INTO bids (listing_id, bidder_id, bid_amount, created_at) 
                VALUES (%s, %s, %s, NOW())""",
             (listing_id, buyer_id, bid_amount)
         )
+
+        # 4. Update the livestock listing's current highest bid
+        cursor.execute(
+            """UPDATE livestock_listings SET current_highest_bid = %s WHERE listing_id = %s""",
+            (bid_amount, listing_id)
+        )
+
         connection.commit()
 
         return jsonify({'success': True, 'message': 'Bid placed successfully!'})
