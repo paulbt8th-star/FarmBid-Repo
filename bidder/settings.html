@@ -195,7 +195,7 @@
       document.getElementById('settingsEmail').value = user.email || '';
       document.getElementById('settingsContact').value = user.contact_number || user.contact || '';
 
-      const resBids = await fetch(`http://127.0.0.1:3000/api/bids/bidder/${bidderId}`);
+      const resBids = await fetch(`/api/bids/bidder/${bidderId}`);
       const resBidsData = await resBids.json();
       const bids = (resBidsData && resBidsData.success && resBidsData.data) ? resBidsData.data : [];
 
@@ -225,7 +225,7 @@
       const contactNumber = document.getElementById('settingsContact').value;
 
       try {
-        const res = await fetch(`http://127.0.0.1:3000/api/farmer/settings/${bidderId}`, {
+        const res = await fetch(`/api/farmer/settings/${bidderId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ firstName, lastName, contactNumber, gcashNumber: '' })
@@ -271,7 +271,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
 
       if (res.ok && result.success) {
@@ -328,7 +328,7 @@
   }
 
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+    const res = await fetch(`/api/buyer/notifications/${bidderId}`);
     const result = await res.json();
     const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 

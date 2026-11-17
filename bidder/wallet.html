@@ -259,7 +259,7 @@
         const gcashNumber = document.getElementById('topUpGcashInput').value;
 
         try {
-          const res = await fetch('http://127.0.0.1:3000/api/buyer/topup-gcash', {
+          const res = await fetch('/api/buyer/topup-gcash', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ buyerId: bidderId, amount, gcashNumber })
@@ -279,8 +279,8 @@
 
     try {
       const [walletRes, txnRes] = await Promise.all([
-        fetch(`http://127.0.0.1:3000/api/buyer/wallet/${bidderId}`),
-        fetch(`http://127.0.0.1:3000/api/buyer/transactions/${bidderId}`)
+        fetch(`/api/buyer/wallet/${bidderId}`),
+        fetch(`/api/buyer/transactions/${bidderId}`)
       ]);
 
       const walletResult = await walletRes.json();
@@ -376,7 +376,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
       const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 

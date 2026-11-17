@@ -241,7 +241,7 @@
     const bidderId = user ? (user.user_id || user.id || user.userId) : null;
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/confirm-receipt/${listingId}`, {
+      const res = await fetch(`/api/buyer/confirm-receipt/${listingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bidderId })
@@ -291,8 +291,8 @@
 
     try {
       const [bidsRes, walletRes] = await Promise.all([
-        fetch(`http://127.0.0.1:3000/api/bids/bidder/${bidderId}`),
-        fetch(`http://127.0.0.1:3000/api/buyer/wallet/${bidderId}`)
+        fetch(`/api/bids/bidder/${bidderId}`),
+        fetch(`/api/buyer/wallet/${bidderId}`)
       ]);
 
       const result = await bidsRes.json();
@@ -491,7 +491,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
       const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 

@@ -52,7 +52,7 @@
 
     document.getElementById('simulatePayBtn').addEventListener('click', async () => {
       try {
-        const res = await fetch('http://127.0.0.1:3000/api/buyer/simulate-credit', {
+        const res = await fetch('/api/buyer/simulate-credit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ buyerId, amount })

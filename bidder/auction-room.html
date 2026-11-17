@@ -423,8 +423,8 @@
 
     try {
       const [listingRes, bidsRes] = await Promise.all([
-        fetch('http://127.0.0.1:3000/api/listings'),
-        fetch(`http://127.0.0.1:3000/api/bids/listing/${listingId}`)
+        fetch('/api/listings'),
+        fetch(`/api/bids/listing/${listingId}`)
       ]);
 
       const listingResult = await listingRes.json();
@@ -711,7 +711,7 @@
           const bidAmount = Number(rawVal);
           
           try {
-            const response = await fetch('http://127.0.0.1:3000/api/bids', {
+            const response = await fetch('/api/bids', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -769,7 +769,7 @@
     }
 
     try {
-      const res = await fetch('http://127.0.0.1:3000/api/disputes', {
+      const res = await fetch('/api/disputes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -839,7 +839,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
 
       if (res.ok && result.success) {
@@ -896,7 +896,7 @@
   }
 
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+    const res = await fetch(`/api/buyer/notifications/${bidderId}`);
     const result = await res.json();
     const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 

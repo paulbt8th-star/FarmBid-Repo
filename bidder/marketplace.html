@@ -411,7 +411,7 @@
     // 4. Fetch Real-time Notifications via Unified Endpoint
     const bidderId = user.id || user.user_id || user.userId;
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
       const list = document.getElementById('notificationList');
       const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
@@ -438,7 +438,7 @@
 
   async function loadMarketplaceListings(grid) {
     try {
-      const response = await fetch('http://127.0.0.1:3000/api/listings');
+      const response = await fetch('/api/listings');
       const result = await response.json();
 
       if (!response.ok || !result.success) return;
@@ -611,7 +611,7 @@
     }
 
     try {
-      const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+      const res = await fetch(`/api/buyer/notifications/${bidderId}`);
       const result = await res.json();
 
       if (res.ok && result.success) {
@@ -668,7 +668,7 @@
   }
 
   try {
-    const res = await fetch(`http://127.0.0.1:3000/api/buyer/notifications/${bidderId}`);
+    const res = await fetch(`/api/buyer/notifications/${bidderId}`);
     const result = await res.json();
     const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 
