@@ -1562,6 +1562,75 @@ def get_admin_notifications():
         if cursor: cursor.close()
         if connection: connection.close()
 
+# --- Bidder / Buyer Dashboard & Wallet APIs ---
+
+@app.route('/api/bidder/wallet/<int:user_id>', methods=['GET'])
+def get_bidder_wallet(user_id):
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (user_id,))
+        wallet = cursor.fetchone()
+        
+        balance = wallet.get('wallet_balance', 0.00) if wallet else 0.00
+        committed = wallet.get('committed_balance', 0.00) if wallet else 0.00
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'wallet_balance': balance,
+                'available_balance': balance,
+                'committed_balance': committed
+            }
+        }), 200
+    except Exception as e:
+        print("Bidder Wallet Error:", str(e))
+        return jsonify({
+            'success': True,
+            'data': {
+                'wallet_balance': 0.00,
+                'available_balance': 0.00,
+                'committed_balance': 0.00
+            }
+        }), 200
+    finally:
+        if cursor: cursor.close()
+        if connection: connection.close()
+
+
+@app.route('/api/bidder/stats/<int:user_id>', methods=['GET'])
+def get_bidder_stats(user_id):
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'live_bids': 0,
+                'committed_funds': 0.00,
+                'won_bidding': 0
+            }
+        }), 200
+    except Exception as e:
+        print("Bidder Stats Error:", str(e))
+        return jsonify({
+            'success': True,
+            'data': {
+                'live_bids': 0,
+                'committed_funds': 0.00,
+                'won_bidding': 0
+            }
+        }), 200
+    finally:
+        if cursor: cursor.close()
+        if connection: connection.close()
+
 # Admin Settings Xendit Status API
 @app.route('/api/admin/settings/xendit-status', methods=['GET'])
 def get_admin_xendit_status():
