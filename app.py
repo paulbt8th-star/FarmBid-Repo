@@ -752,7 +752,7 @@ def get_all_listings():
                 if item.get('created_at') and isinstance(item['created_at'], datetime):
                     item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-                # Resolve Images
+                # Resolve Images with physical file existence check
                 img_val = item.get('image_url')
                 resolved_images = []
                 
@@ -762,10 +762,11 @@ def get_all_listings():
                         for img in parsed:
                             if img:
                                 clean_filename = os.path.basename(str(img).strip('"[]\''))
-                                resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                                physical_path = os.path.join(app.root_path, 'uploads', 'livestock', clean_filename)
+                                if os.path.exists(physical_path):
+                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
                     except:
-                        clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                        pass
                 
                 if not resolved_images:
                     resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
@@ -876,7 +877,7 @@ def get_farmer_listings(farmer_id):
             if item.get('created_at') and isinstance(item['created_at'], datetime):
                 item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-            # Resolve Images
+            # Resolve Images with physical file existence check
             img_val = item.get('image_url')
             resolved_images = []
             
@@ -886,10 +887,11 @@ def get_farmer_listings(farmer_id):
                     for img in parsed:
                         if img:
                             clean_filename = os.path.basename(str(img).strip('"[]\''))
-                            resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                            physical_path = os.path.join(app.root_path, 'uploads', 'livestock', clean_filename)
+                            if os.path.exists(physical_path):
+                                resolved_images.append(f"/uploads/livestock/{clean_filename}")
                 except:
-                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                    pass
             
             if not resolved_images:
                 resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
