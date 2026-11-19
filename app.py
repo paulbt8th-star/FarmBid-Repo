@@ -75,33 +75,45 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Get user's wallet balance
+       # 1. Get user's wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
         balance = float(wallet['wallet_balance']) if wallet and wallet.get('wallet_balance') is not None else 0.00
 
-        # Calculate user's current committed funds across active listings (excluding current listing_id)
+        # Calculate committed funds across ALL active listings
         cursor.execute(
             """
             SELECT b.listing_id, MAX(b.bid_amount) AS max_bid
             FROM bids b
             JOIN livestock_listings l ON b.listing_id = l.listing_id
             WHERE b.bidder_id = %s
-              AND b.listing_id != %s
               AND LOWER(COALESCE(l.auction_status, 'live')) NOT IN ('ended', 'closed', 'completed')
               AND (l.auction_ends_at IS NULL OR l.auction_ends_at > NOW())
             GROUP BY b.listing_id
             """,
-            (buyer_id, listing_id)
+            (buyer_id,)
         )
-        other_active_bids = cursor.fetchall()
-        committed_other_listings = sum(float(row.get('max_bid') or 0) for row in other_active_bids)
-        available_for_this_listing = max(0.00, balance - committed_other_listings)
+        active_bid_rows = cursor.fetchall()
+        total_committed = sum(float(row.get('max_bid') or 0) for row in active_bid_rows)
+        available_bidding_money = max(0.00, balance - total_committed)
 
-        if bid_amount > available_for_this_listing:
+        # User's current commitment on THIS specific listing (if they already bid on it)
+        current_bid_this_listing = 0.00
+        for row in active_bid_rows:
+            if str(row.get('listing_id')) == str(listing_id):
+                current_bid_this_listing = float(row.get('max_bid') or 0)
+                break
+
+        max_allowed_for_this_listing = available_bidding_money + current_bid_this_listing
+
+        if bid_amount > max_allowed_for_this_listing:
             return jsonify({
                 'success': False,
-                'message': f'Insufficient available wallet balance. Available: ₱{available_for_this_listing:,.2f}.'
+                'message': (
+                    f'Insufficient available bidding money. '
+                    f'Available: ₱{available_bidding_money:,.2f}'
+                    + (f' (Max on this listing: ₱{max_allowed_for_this_listing:,.2f}).' if current_bid_this_listing > 0 else '.')
+                )
             }), 400
 
         # 2. Check current highest bid or starting price on the listing
