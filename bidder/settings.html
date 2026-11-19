@@ -125,7 +125,7 @@
           </div>
 
           <div style="margin-bottom: 24px; background: #f0fdf4; padding: 16px; border-radius: 8px; border: 1px solid #bbf7d0;">
-            <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 6px; color: #166534;">🛡️ Bidding Account Status</label>
+            <label style="font-size: 0.85rem; font-weight: 700; display: block; margin-bottom: 6px; color: #166534;">Bidding Account Status</label>
             <p style="font-size: 0.78rem; color: #15803d; margin-bottom: 4px;">Your buyer account is verified and approved for live auctions and wallet deposits.</p>
           </div>
 
@@ -156,14 +156,6 @@
     const notifDropdown = document.getElementById('notificationDropdown');
     const profileBtn = document.getElementById('profileDropdownBtn');
     const profileMenu = document.getElementById('profileDropdownMenu');
-
-    if (notifBtn && notifDropdown) {
-      notifBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (profileMenu) profileMenu.style.display = 'none';
-        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
-      });
-    }
 
     if (profileBtn && profileMenu) {
       profileBtn.addEventListener('click', (e) => {
@@ -308,24 +300,23 @@
   const notifList = document.getElementById('notificationList');
 
   if (notifBtn && notifDropdown) {
-    notifBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = notifDropdown.style.display === 'block';
-      notifDropdown.style.display = isOpen ? 'none' : 'block';
-      if (!isOpen && notifBadge) {
-        notifBadge.style.display = 'none';
-        localStorage.setItem('farmbid_notifications_read', 'true');
-      }
-    });
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const profileMenu = document.getElementById('profileDropdownMenu');
+        if (profileMenu) profileMenu.style.display = 'none';
 
-    notifDropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_notifications_read', 'true');
+        }
+      });
 
-    document.addEventListener('click', () => {
-      notifDropdown.style.display = 'none';
-    });
-  }
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    }
 
   try {
     const res = await fetch(`/api/buyer/notifications/${bidderId}`);
