@@ -225,6 +225,19 @@
   </div>
 
 <script>
+  function parseLocalDate(dateString) {
+    if (!dateString) return null;
+    const cleanStr = String(dateString).trim().replace('T', ' ');
+    const parts = cleanStr.split(' ');
+    const datePart = parts[0];
+    const timePart = parts[1] || '00:00:00';
+    if (!datePart) return null;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0);
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
     if (!user || user.role !== 'bidder') {
@@ -235,15 +248,20 @@
     if (user) {
       const nameEl = document.getElementById('dropdownUserName');
       const emailEl = document.getElementById('dropdownUserEmail');
+      const nameDisplay = document.getElementById('walletUserNameDisplay');
+      if (nameEl) nameEl.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''}`;
+      if (emailEl) emailEl.textContent = user.email || '';
+      if (nameDisplay) nameDisplay.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''} · Philippine peso (PHP)`;
+    }
 
-      // Profile Dropdown Toggle & Logout Handler
+    // Profile Dropdown Toggle & Logout Handler
     const profileBtn = document.getElementById('profileDropdownBtn');
     const profileMenu = document.getElementById('profileDropdownMenu');
     const notifDropdownEl = document.getElementById('notificationDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
 
     if (profileBtn && profileMenu) {
-      profileBtn.addEventListener('click', (e) => {
+      profileBtn.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         const isOpen = profileMenu.style.display === 'block';
@@ -251,11 +269,11 @@
         if (!isOpen && notifDropdownEl) {
           notifDropdownEl.style.display = 'none';
         }
-      });
+      };
 
-      profileMenu.addEventListener('click', (e) => {
+      profileMenu.onclick = (e) => {
         e.stopPropagation();
-      });
+      };
 
       document.addEventListener('click', () => {
         profileMenu.style.display = 'none';
@@ -267,12 +285,6 @@
         localStorage.clear();
         window.location.href = '../auth/login.html';
       });
-    }
-
-      const nameDisplay = document.getElementById('walletUserNameDisplay');
-      if (nameEl) nameEl.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''}`;
-      if (emailEl) emailEl.textContent = user.email || '';
-      if (nameDisplay) nameDisplay.textContent = `${user.first_name || 'Buyer'} ${user.last_name || ''} · Philippine peso (PHP)`;
     }
 
     const bidderId = user.user_id || user.id || user.userId;
@@ -321,23 +333,40 @@
       const txnResult = await txnRes.json();
 
       if (walletRes.ok && walletResult.success) {
-        const data = walletResult.data;
-        
+        const data = walletResult.data || {};
+        const now = new Date();
+
+        // Filter out closed/expired auctions and deduplicate by listing_id (highest bid)
+        const highestMap = {};
+        (data.bids || []).forEach(b => {
+          const rawStatus = String(b.auction_status || 'live').toLowerCase();
+          const endsAt = parseLocalDate(b.auction_ends_at);
+          const isExpired = endsAt ? now > endsAt : false;
+          const isClosed = isExpired || ['ended', 'closed', 'completed'].includes(rawStatus);
+          if (isClosed) return;
+
+          const amt = Number(b.bid_amount || 0);
+          if (!highestMap[b.listing_id] || amt > Number(highestMap[b.listing_id].bid_amount || 0)) {
+            highestMap[b.listing_id] = { ...b, bid_amount: amt };
+          }
+        });
+
+        const activeBids = Object.values(highestMap);
+        const walletBalance = Number(data.wallet_balance || 0);
+        const committedFunds = activeBids.length > 0
+          ? activeBids.reduce((sum, b) => sum + Number(b.bid_amount || 0), 0)
+          : Number(data.committed_funds || 0);
+        const availableFunds = Math.max(0, walletBalance - committedFunds);
+
         const totalBalEl = document.getElementById('totalWalletBalance');
         const availFundsEl = document.getElementById('availableFundsDisplay');
         const commFundsEl = document.getElementById('committedFundsDisplay');
-        
-        if (totalBalEl) totalBalEl.textContent = `₱${Number(data.wallet_balance || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-        if (availFundsEl) availFundsEl.textContent = `₱${Number(data.available_funds || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
-        if (commFundsEl) commFundsEl.textContent = `₱${Number(data.committed_funds || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}`;
 
-        // Render ONLY active live bids in the Reserved Funds table (Filtering out closed/completed ones)
+        if (totalBalEl) totalBalEl.textContent = `₱${walletBalance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+        if (availFundsEl) availFundsEl.textContent = `₱${availableFunds.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+        if (commFundsEl) commFundsEl.textContent = `₱${committedFunds.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+
         const reservedTableBody = document.getElementById('reservedBidsTableBody');
-        const activeBids = (data.bids || []).filter(b => {
-          const status = String(b.auction_status || '').toLowerCase();
-          return !['ended', 'closed', 'completed'].includes(status);
-        });
-
         if (reservedTableBody) {
           if (activeBids.length === 0) {
             reservedTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No active bids found. All your auctions have ended!</td></tr>`;
@@ -345,7 +374,7 @@
             reservedTableBody.innerHTML = activeBids.map(b => `
               <tr style="border-bottom: 1px solid var(--border-light);">
                 <td style="padding: 12px 10px; font-weight: 600;">${b.animal_type || 'Livestock'} <br><span style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(b.listing_id).padStart(3, '0')}</span></td>
-                <td style="padding: 12px 10px; font-weight: 700;">₱${Number(b.bid_amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 12px 10px; font-weight: 700;">₱${Number(b.bid_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                 <td style="padding: 12px 10px;"><span class="badge badge-amber">Active Hold</span></td>
               </tr>
             `).join('');
@@ -366,7 +395,7 @@
             const rawStatus = String(t.status || t.txn_status || t.payment_status || 'Completed');
             const statusLower = rawStatus.toLowerCase();
             const typeLower = String(t.txn_type || t.type || label).toLowerCase();
-            
+
             const numericAmount = Number(t.amount || 0);
             const isCredit =
               numericAmount > 0 &&
@@ -389,9 +418,9 @@
               <tr style="border-bottom: 1px solid var(--border-light);">
                 <td style="padding: 12px 10px; color: var(--text-muted);">${t.created_at || t.date || 'N/A'}</td>
                 <td style="padding: 12px 10px; font-weight: 600;">${label}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${refCode}</span></td>
-                <td style="padding: 12px 10px; font-weight: 700; color: ${amountColor};">${sign}₱${Math.abs(numericAmount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 12px 10px; font-weight: 700; color: ${amountColor};">${sign}₱${Math.abs(numericAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                 <td style="padding: 12px 10px;"><span class="badge ${badgeClass}">${rawStatus}</span></td>
-                <td style="padding: 12px 10px; font-weight: 600; text-align: right;">₱${Number(balanceValue).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 12px 10px; font-weight: 600; text-align: right;">₱${Number(balanceValue).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
               </tr>
             `;
           }).join('');
@@ -415,8 +444,11 @@
     const notifBadge = document.getElementById('notifBadge');
 
     if (notifBtn && notifDropdown) {
-      notifBtn.addEventListener('click', (e) => {
+      notifBtn.onclick = (e) => {
         e.stopPropagation();
+        const profileMenu = document.getElementById('profileDropdownMenu');
+        if (profileMenu) profileMenu.style.display = 'none';
+
         const isOpen = notifDropdown.style.display === 'block';
         notifDropdown.style.display = isOpen ? 'none' : 'block';
 
@@ -424,11 +456,11 @@
           notifBadge.style.display = 'none';
           localStorage.setItem('farmbid_notifications_read', 'true');
         }
-      });
+      };
 
-      notifDropdown.addEventListener('click', (e) => {
+      notifDropdown.onclick = (e) => {
         e.stopPropagation();
-      });
+      };
 
       document.addEventListener('click', () => {
         notifDropdown.style.display = 'none';

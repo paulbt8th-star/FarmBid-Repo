@@ -665,17 +665,59 @@ def get_buyer_wallet(buyer_id):
         # Get wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
-        balance = float(wallet['wallet_balance']) if wallet else 0.00
+        balance = float(wallet['wallet_balance']) if wallet and wallet.get('wallet_balance') is not None else 0.00
 
-        # Return response wrapped in 'data' to match frontend expectation
+        # Fetch user's bids joined with livestock listings (excluding closed/expired auctions)
+        query = """
+            SELECT
+                b.bid_id,
+                b.listing_id,
+                b.bid_amount,
+                b.created_at,
+                l.animal_type,
+                l.breed,
+                l.weight,
+                l.current_highest_bid,
+                l.starting_price,
+                l.auction_status,
+                l.auction_ends_at
+            FROM bids b
+            JOIN livestock_listings l ON b.listing_id = l.listing_id
+            WHERE b.bidder_id = %s
+              AND LOWER(COALESCE(l.auction_status, 'live')) NOT IN ('ended', 'closed', 'completed')
+              AND (l.auction_ends_at IS NULL OR l.auction_ends_at > NOW())
+            ORDER BY b.bid_amount DESC, b.created_at DESC
+        """
+        cursor.execute(query, (buyer_id,))
+        rows = cursor.fetchall()
+
+        # Keep each user's highest active bid per listing_id for committed funds
+        highest_by_listing = {}
+        for row in rows:
+            lid = row['listing_id']
+            amt = float(row.get('bid_amount') or 0)
+            if lid not in highest_by_listing or amt > float(highest_by_listing[lid]['bid_amount'] or 0):
+                item = dict(row)
+                if item.get('created_at') and isinstance(item['created_at'], datetime):
+                    item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+                if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
+                    item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
+                item['bid_amount'] = amt
+                highest_by_listing[lid] = item
+
+        active_bids = list(highest_by_listing.values())
+        committed_funds = sum(float(item['bid_amount'] or 0) for item in active_bids)
+        available_funds = max(0.00, balance - committed_funds)
+
         return jsonify({
             'success': True,
             'data': {
                 'wallet_balance': balance,
-                'available_funds': balance, # or your specific available calculation
-                'committed_funds': 0.00
+                'available_funds': available_funds,
+                'committed_funds': committed_funds,
+                'bids': active_bids
             }
-        })
+        }), 200
 
     except Exception as e:
         print("Get Wallet Error:", str(e))
