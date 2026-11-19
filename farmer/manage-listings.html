@@ -69,7 +69,7 @@
       <div></div>
       <div class="dash-topbar-right" style="position: relative;">
         <span class="role-badge" style="background-color: var(--bg-soft-green); color: var(--brand-dark-green);">FARMER</span>
-        
+
         <!-- Notifications Bell Button -->
         <div style="position: relative; display: inline-block;">
           <button id="notificationBtn" class="icon-btn" aria-label="Notifications" style="position: relative; cursor: pointer;">
@@ -151,18 +151,16 @@
 
         <div class="metric-card">
           <div class="metric-card-top">
-            <span class="metric-card-title">Scheduled</span>
+            <span class="metric-card-title">Ended auctions</span>
             <div class="metric-icon-box">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
               </svg>
             </div>
           </div>
-          <div class="metric-value" id="metricScheduledCount">0</div>
-          <div class="metric-subtext" id="metricScheduledSub">No scheduled auctions</div>
+          <div class="metric-value" id="metricEndedCount">0</div>
+          <div class="metric-subtext" id="metricEndedSub">No ended auctions</div>
         </div>
 
         <div class="metric-card">
@@ -182,10 +180,8 @@
 
       <!-- Inventory Table Card -->
       <div class="dash-card">
-        <div class="dash-card-header">
-          <div>
-            <h2 class="dash-card-title">Livestock inventory</h2>
-            <p class="dash-card-subtitle">Your owned livestock and current listing status.</p>
+        <h2 class="dash-card-title">Livestock inventory</h2>
+        <p class="dash-card-subtitle">Your owned livestock and current listing status.</p>
 
         <div class="table-responsive">
           <table class="data-table">
@@ -211,7 +207,6 @@
 
     </div>
 
-    
   </main>
 
   <script>
@@ -243,7 +238,7 @@
       notifBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (profileMenu) profileMenu.style.display = 'none';
-        
+
         const isOpen = notifDropdown.style.display === 'block';
         notifDropdown.style.display = isOpen ? 'none' : 'block';
 
@@ -316,18 +311,29 @@
       const tbody = document.querySelector('table tbody');
       if (!tbody) return;
 
+      const nowMs = new Date().getTime();
+      const getEndsAtMs = (rawEnds) => {
+        if (!rawEnds) return 0;
+        const parsed = new Date(String(rawEnds).includes('T') ? rawEnds : String(rawEnds).replace(' ', 'T')).getTime();
+        return Number.isNaN(parsed) ? 0 : parsed;
+      };
+
       const totalOwned = listings.length;
       const liveCount = listings.filter(l => {
-        const rawEnds = l.auction_ends_at;
-        const endsAt = rawEnds ? new Date(String(rawEnds).includes('T') ? rawEnds : rawEnds.replace(' ', 'T')).getTime() : 0;
-        const now = new Date().getTime();
-        const rawStatus = (l.auction_status || 'live').toLowerCase();
-        const isExpired = (endsAt && now > endsAt) || rawStatus === 'ended' || rawStatus === 'closed';
-        return !isExpired && (rawStatus === 'live' || rawStatus === 'active');
+        const endsAt = getEndsAtMs(l.auction_ends_at);
+        const rawStatus = String(l.auction_status || 'live').toLowerCase();
+        const isExpired = (endsAt && nowMs > endsAt) || ['ended', 'closed'].includes(rawStatus);
+        return !isExpired && ['live', 'active'].includes(rawStatus);
       }).length;
 
-      const scheduledCount = listings.filter(l => (l.auction_status || '').toLowerCase() === 'scheduled').length;
-      const draftCount = listings.filter(l => ['draft', 'unlisted'].includes((l.auction_status || '').toLowerCase())).length;
+      const endedCount = listings.filter(l => {
+        const endsAt = getEndsAtMs(l.auction_ends_at);
+        const rawStatus = String(l.auction_status || 'live').toLowerCase();
+        if (rawStatus === 'completed') return false;
+        return (endsAt && nowMs > endsAt) || ['ended', 'closed'].includes(rawStatus);
+      }).length;
+
+      const draftCount = listings.filter(l => ['draft', 'unlisted'].includes(String(l.auction_status || '').toLowerCase())).length;
       const notListedCount = listings.filter(l => !l.auction_status || l.auction_status === 'not_listed').length;
       const uniqueTypes = new Set(listings.map(l => l.animal_type)).size;
 
@@ -339,10 +345,10 @@
       const liveVal = document.getElementById('metricLiveCount');
       if (liveVal) liveVal.textContent = liveCount;
 
-      const schedVal = document.getElementById('metricScheduledCount');
-      const schedSub = document.getElementById('metricScheduledSub');
-      if (schedVal) schedVal.textContent = scheduledCount;
-      if (schedSub) schedSub.textContent = scheduledCount > 0 ? 'Upcoming auction scheduled' : 'No scheduled auctions';
+      const endedVal = document.getElementById('metricEndedCount');
+      const endedSub = document.getElementById('metricEndedSub');
+      if (endedVal) endedVal.textContent = endedCount;
+      if (endedSub) endedSub.textContent = endedCount > 0 ? 'Closed or expired auctions' : 'No ended auctions';
 
       const draftVal = document.getElementById('metricDraftCount');
       const draftSub = document.getElementById('metricDraftSub');
@@ -363,10 +369,10 @@
       tbody.innerHTML = listings.map(item => {
         const code = `LV-${String(item.listing_id).padStart(3, '0')}`;
         const startPrice = Number(item.starting_price || 0).toLocaleString('en-PH');
-        const highestBid = item.current_highest_bid 
-          ? `Highest bid ₱${Number(item.current_highest_bid).toLocaleString('en-PH')}` 
+        const highestBid = item.current_highest_bid
+          ? `Highest bid ₱${Number(item.current_highest_bid).toLocaleString('en-PH')}`
           : 'No bids yet';
-        
+
         let imgUrl = 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55';
         if (item.images && Array.isArray(item.images) && item.images.length > 0) {
           imgUrl = item.images[0];
@@ -375,29 +381,23 @@
             try {
               const parsed = JSON.parse(item.image_url);
               if (Array.isArray(parsed) && parsed.length > 0) imgUrl = parsed[0];
-            } catch(e) {}
+            } catch (e) {}
           } else {
             imgUrl = item.image_url;
           }
         }
 
-        const rawEnds = item.auction_ends_at;
-        const endsAt = rawEnds ? new Date(String(rawEnds).includes('T') ? rawEnds : rawEnds.replace(' ', 'T')).getTime() : 0;
-        const now = new Date().getTime();
-        const rawStatus = (item.auction_status || 'live').toLowerCase();
-        
+        const endsAt = getEndsAtMs(item.auction_ends_at);
+        const rawStatus = String(item.auction_status || 'live').toLowerCase();
+
         let badgeText = 'Live';
         let badgeBg = '#e8f5e9';
         let badgeColor = '#1e5631';
 
-        if ((endsAt && now > endsAt) || rawStatus === 'ended' || rawStatus === 'closed') {
+        if ((endsAt && nowMs > endsAt) || ['ended', 'closed'].includes(rawStatus)) {
           badgeText = 'Auction Ended';
           badgeBg = '#fee2e2';
           badgeColor = '#991b1b';
-        } else if (rawStatus === 'scheduled') {
-          badgeText = 'Scheduled';
-          badgeBg = '#e0f2fe';
-          badgeColor = '#0369a1';
         } else if (rawStatus === 'draft' || rawStatus === 'unlisted') {
           badgeText = 'Draft';
           badgeBg = '#fef3c7';
