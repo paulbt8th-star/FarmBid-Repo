@@ -747,7 +747,7 @@ def get_all_listings():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT l.*, u.first_name AS farmer_first_name, u.last_name AS farmer_last_name, u.contact_number AS farmer_contact, u.address AS farmer_address
             FROM livestock_listings l
@@ -755,59 +755,66 @@ def get_all_listings():
             ORDER BY l.created_at DESC
         """)
         listings = cursor.fetchall()
-        
+
         for item in listings:
-                if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
-                    item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
-                if item.get('created_at') and isinstance(item['created_at'], datetime):
-                    item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+            if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
+                item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
+            if item.get('created_at') and isinstance(item['created_at'], datetime):
+                item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-                # Foolproof Image Resolution using basename
-                img_val = item.get('image_url')
-                resolved_images = []
-                
-                if img_val:
-                    try:
-                        parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
-                        for img in parsed:
-                            if img:
-                                img_str = str(img).strip('"[]\'')
-                                # If it's an external URL (like Unsplash), keep it; otherwise extract clean filename
-                                if img_str.startswith('http://') and '127.0.0.1' not in img_str and 'localhost' not in img_str:
-                                    resolved_images.append(img_str)
-                                elif img_str.startswith('https://'):
-                                    resolved_images.append(img_str)
-                                else:
-                                    clean_filename = os.path.basename(img_str)
-                                    if clean_filename:
-                                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
-                    except:
-                        clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                        if clean_filename:
-                            resolved_images.append(f"/uploads/livestock/{clean_filename}")
-                
-                if not resolved_images:
-                    resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
-                    
-                item['images'] = resolved_images
-                item['image_url'] = resolved_images[0]
+            # Foolproof Image Resolution using basename
+            img_val = item.get('image_url')
+            resolved_images = []
 
-                # Resolve Documents
-                doc_val = item.get('documents')
-                resolved_docs = []
-                if doc_val:
-                    try:
-                        parsed_docs = json.loads(doc_val) if isinstance(doc_val, str) and doc_val.startswith('[') else [doc_val]
-                        for doc in parsed_docs:
-                            if doc:
-                                clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
+            if img_val:
+                try:
+                    parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
+                    for img in parsed:
+                        if img:
+                            img_str = str(img).strip('"[]\'')
+                            if img_str.startswith('http://') and '127.0.0.1' not in img_str and 'localhost' not in img_str:
+                                resolved_images.append(img_str)
+                            elif img_str.startswith('https://'):
+                                resolved_images.append(img_str)
+                            else:
+                                clean_filename = os.path.basename(img_str)
+                                if clean_filename:
+                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                except Exception:
+                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                    if clean_filename:
+                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
+
+            if not resolved_images:
+                resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
+
+            item['images'] = resolved_images
+            item['image_url'] = resolved_images[0]
+
+            # Resolve Documents (preserve full HTTP/HTTPS URLs like Cloudinary)
+            doc_val = item.get('documents')
+            resolved_docs = []
+            if doc_val:
+                try:
+                    parsed_docs = json.loads(doc_val) if isinstance(doc_val, str) and doc_val.startswith('[') else [doc_val]
+                    for doc in parsed_docs:
+                        if doc:
+                            doc_str = str(doc).strip('"[]\'')
+                            if doc_str.startswith(('http://', 'https://')):
+                                resolved_docs.append(doc_str)
+                            else:
+                                clean_doc_filename = os.path.basename(doc_str)
                                 if clean_doc_filename:
                                     resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
-                    except:
-                        clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
+                except Exception:
+                    doc_str = str(doc_val).strip('"[]\'')
+                    if doc_str.startswith(('http://', 'https://')):
+                        resolved_docs.append(doc_str)
+                    else:
+                        clean_doc_filename = os.path.basename(doc_str)
                         if clean_doc_filename:
                             resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
-                item['documents'] = resolved_docs
+            item['documents'] = resolved_docs
 
         return jsonify({
             'success': True,
@@ -818,8 +825,10 @@ def get_all_listings():
         print("Get Listings API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 17. Create New Livestock Listing (Saves full image array and documents array as JSON)
 @app.route('/api/listings', methods=['POST'])
