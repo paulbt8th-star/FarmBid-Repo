@@ -396,6 +396,16 @@
             const statusLower = rawStatus.toLowerCase();
             const typeLower = String(t.txn_type || t.type || label).toLowerCase();
 
+            const rowBalance = Number(
+              t.running_balance !== undefined && t.running_balance !== null
+                ? t.running_balance
+                : (t.balance_after ?? t.wallet_balance ?? 0)
+            );
+            const formattedRowBalance = `₱${rowBalance.toLocaleString('en-PH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}`;
+
             const numericAmount = Number(t.amount || 0);
             const isCredit =
               numericAmount > 0 &&

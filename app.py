@@ -1485,13 +1485,29 @@ def get_buyer_transactions(buyer_id):
         cursor.execute("""
             SELECT * FROM wallet_transactions 
             WHERE user_id = %s 
-            ORDER BY created_at DESC
+            ORDER BY created_at ASC, id ASC
         """, (buyer_id,))
-        transactions = cursor.fetchall()
-        for t in transactions:
+        rows = cursor.fetchall()
+
+        running_balance = 0.0
+        for t in rows:
+            amt = float(t.get('amount') or 0.0)
+            t_type = str(t.get('type') or '').lower()
+
+            if t_type in ('debit', 'payment', 'withdrawal'):
+                running_balance = max(0.0, running_balance - amt)
+            else:
+                # 'credit', 'topup', 'refund', etc.
+                running_balance += amt
+
+            t['running_balance'] = round(running_balance, 2)
+
             if t.get('created_at') and isinstance(t['created_at'], datetime):
                 t['created_at'] = t['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-        return jsonify({'success': True, 'data': transactions}), 200
+
+        # Return newest first for table display while keeping each row's historical running_balance intact
+        rows.reverse()
+        return jsonify({'success': True, 'data': rows}), 200
     except Exception as e:
         print("Transactions API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
