@@ -103,6 +103,17 @@ def place_bid():
             (bid_amount, listing_id)
         )
 
+        # Deduct / hold bid amount from available wallet_balance
+        cursor.execute(
+            """UPDATE wallets
+               SET wallet_balance = wallet_balance - %s
+               WHERE user_id = %s AND wallet_balance >= %s""",
+            (bid_amount, buyer_id, bid_amount)
+        )
+        if cursor.rowcount == 0:
+            connection.rollback()
+            return jsonify({'success': False, 'message': 'Insufficient available wallet balance.'}), 400
+
         connection.commit()
 
         return jsonify({'success': True, 'message': 'Bid placed successfully!'})
