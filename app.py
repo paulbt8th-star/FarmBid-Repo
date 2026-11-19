@@ -549,30 +549,34 @@ def get_farmer_wallet(farmer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # Try fetching wallet balance, fallback to 0 if table/columns differ
+
+        balance = 0.0
         try:
-            cursor.execute("SELECT * FROM wallets WHERE user_id = %s OR farmer_id = %s", (farmer_id, farmer_id))
+            cursor.execute("SELECT * FROM wallets WHERE user_id = %s", (farmer_id,))
             wallet = cursor.fetchone()
+            if wallet:
+                raw_bal = wallet.get('wallet_balance')
+                if raw_bal is None:
+                    raw_bal = wallet.get('balance')
+                balance = float(raw_bal or 0.0)
         except Exception:
-            wallet = None
-            
-        balance = wallet.get('balance', 0.0) if wallet else 0.0
-        
+            balance = 0.0
+
         return jsonify({
             'success': True,
             'data': {
                 'balance': balance,
+                'wallet_balance': balance,
                 'available_balance': balance
             }
         }), 200
     except Exception as e:
         print("Wallet Fetch Error:", str(e))
-        # Return default zero balance gracefully instead of 500
         return jsonify({
             'success': True,
             'data': {
                 'balance': 0.0,
+                'wallet_balance': 0.0,
                 'available_balance': 0.0
             }
         }), 200
