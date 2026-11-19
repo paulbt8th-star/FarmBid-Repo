@@ -562,12 +562,30 @@ def get_farmer_wallet(farmer_id):
         except Exception:
             balance = 0.0
 
+        withdrawals = []
+        try:
+            cursor.execute("""
+                SELECT reference_code, amount, gcash_number, status, created_at AS requested_at
+                FROM farmer_withdrawals
+                WHERE farmer_id = %s
+                ORDER BY created_at DESC
+            """, (farmer_id,))
+            rows = cursor.fetchall() or []
+            for r in rows:
+                item = dict(r)
+                if item.get('requested_at') and isinstance(item['requested_at'], datetime):
+                    item['requested_at'] = item['requested_at'].strftime('%Y-%m-%d %H:%M:%S')
+                withdrawals.append(item)
+        except Exception:
+            withdrawals = []
+
         return jsonify({
             'success': True,
             'data': {
                 'balance': balance,
                 'wallet_balance': balance,
-                'available_balance': balance
+                'available_balance': balance,
+                'withdrawals': withdrawals
             }
         }), 200
     except Exception as e:
@@ -577,9 +595,60 @@ def get_farmer_wallet(farmer_id):
             'data': {
                 'balance': 0.0,
                 'wallet_balance': 0.0,
-                'available_balance': 0.0
+                'available_balance': 0.0,
+                'withdrawals': []
             }
         }), 200
+    finally:
+        if cursor: cursor.close()
+        if connection: connection.close()
+
+# 10. Request GCash Withdrawal
+@app.route('/api/farmer/withdraw', methods=['POST'])
+def request_withdrawal():
+    connection = None
+    cursor = None
+    try:
+        data = request.get_json() or {}
+        farmer_id = data.get('farmerId')
+        amount = float(data.get('amount', 0))
+        gcash_number = data.get('gcashNumber')
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (farmer_id,))
+        wallet = cursor.fetchone()
+        current_balance = float(wallet['wallet_balance']) if wallet and wallet.get('wallet_balance') is not None else 0.0
+
+        if amount <= 0 or amount > current_balance:
+            return jsonify({'success': False, 'message': 'Invalid withdrawal amount or insufficient balance.'}), 400
+
+        new_balance = max(0.0, current_balance - amount)
+        ref_code = f"WD-{os.urandom(2).hex().upper()}"
+
+        cursor.execute("UPDATE wallets SET wallet_balance = %s WHERE user_id = %s", (new_balance, farmer_id))
+        try:
+            cursor.execute("UPDATE users SET gcash_number = %s WHERE user_id = %s", (gcash_number, farmer_id))
+        except Exception:
+            pass
+
+        cursor.execute("""
+            INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status, created_at)
+            VALUES (%s, %s, %s, %s, 'Completed', NOW())
+        """, (farmer_id, ref_code, amount, gcash_number))
+
+        connection.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'GCash withdrawal successful!',
+            'new_balance': new_balance
+        }), 200
+
+    except Exception as e:
+        if connection: connection.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor: cursor.close()
         if connection: connection.close()
