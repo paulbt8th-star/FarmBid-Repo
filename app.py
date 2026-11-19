@@ -627,7 +627,6 @@ def request_withdrawal():
 
 def sync_expired_auctions(cursor, farmer_id=None):
     """Marks live/active listings as 'ended' once their auction_ends_at timestamp has passed."""
-    now_pht = get_pht_now()
     if farmer_id is not None:
         cursor.execute("""
             UPDATE livestock_listings
@@ -635,16 +634,16 @@ def sync_expired_auctions(cursor, farmer_id=None):
             WHERE farmer_id = %s
               AND LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
               AND auction_ends_at IS NOT NULL
-              AND (auction_ends_at <= NOW() OR auction_ends_at <= %s)
-        """, (farmer_id, now_pht))
+              AND auction_ends_at <= NOW()
+        """, (farmer_id,))
     else:
         cursor.execute("""
             UPDATE livestock_listings
             SET auction_status = 'ended'
             WHERE LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
               AND auction_ends_at IS NOT NULL
-              AND (auction_ends_at <= NOW() OR auction_ends_at <= %s)
-        """, (now_pht,))
+              AND auction_ends_at <= NOW()
+        """)
 
 # 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
@@ -1471,13 +1470,15 @@ def get_farmer_delivery_queue(farmer_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        sync_expired_auctions(cursor, farmer_id)
-        connection.commit()
+        try:
+            sync_expired_auctions(cursor, farmer_id)
+            connection.commit()
+        except Exception:
+            connection.rollback()
 
-        now_pht = get_pht_now()
         cursor.execute("""
             SELECT l.*,
-                   (SELECT MAX(bid_amount) FROM bids WHERE listing_id = l.listing_id) AS winning_bid,
+                   (SELECT MAX(b.bid_amount) FROM bids b WHERE b.listing_id = l.listing_id) AS winning_bid,
                    (SELECT u.first_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_first_name,
                    (SELECT u.last_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_last_name,
                    (SELECT u.contact_number FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_contact
@@ -1485,10 +1486,10 @@ def get_farmer_delivery_queue(farmer_id):
             WHERE l.farmer_id = %s
               AND (
                   LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'completed', 'settlement', 'pending')
-                  OR (l.auction_ends_at IS NOT NULL AND (l.auction_ends_at <= NOW() OR l.auction_ends_at <= %s))
+                  OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
               )
             ORDER BY l.created_at DESC
-        """, (farmer_id, now_pht))
+        """, (farmer_id,))
         listings = cursor.fetchall()
 
         for item in listings:
