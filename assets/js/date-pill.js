@@ -11,7 +11,6 @@
   function updateDatePills() {
     const formatted = formatPHTDate(new Date());
 
-    // Target elements by common IDs, classes, or data attributes
     const selectors = [
       '#currentDatePill',
       '#headerDatePill',
@@ -24,9 +23,12 @@
       document.querySelectorAll(sel).forEach((el) => matched.add(el));
     });
 
-    // Fallback: match pill-like elements in page headers that currently hold a static date string
-    document.querySelectorAll('.page-header-row span, .page-header-row div, .dash-topbar span, .dash-topbar div').forEach((el) => {
-      if (el.children.length === 0 && /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}$/i.test(el.textContent.trim())) {
+    // Match any leaf element holding a static "Mon DD, YYYY" date anywhere on the page
+    document.querySelectorAll('span, div, button, p, time').forEach((el) => {
+      if (
+        el.children.length === 0 &&
+        /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},\s+\d{4}$/i.test(el.textContent.trim())
+      ) {
         matched.add(el);
       }
     });
