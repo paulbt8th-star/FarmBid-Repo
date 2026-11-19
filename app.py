@@ -625,6 +625,27 @@ def request_withdrawal():
         if cursor: cursor.close()
         if connection: connection.close()
 
+def sync_expired_auctions(cursor, farmer_id=None):
+    """Marks live/active listings as 'ended' once their auction_ends_at timestamp has passed."""
+    now_pht = get_pht_now()
+    if farmer_id is not None:
+        cursor.execute("""
+            UPDATE livestock_listings
+            SET auction_status = 'ended'
+            WHERE farmer_id = %s
+              AND LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
+              AND auction_ends_at IS NOT NULL
+              AND (auction_ends_at <= NOW() OR auction_ends_at <= %s)
+        """, (farmer_id, now_pht))
+    else:
+        cursor.execute("""
+            UPDATE livestock_listings
+            SET auction_status = 'ended'
+            WHERE LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
+              AND auction_ends_at IS NOT NULL
+              AND (auction_ends_at <= NOW() OR auction_ends_at <= %s)
+        """, (now_pht,))
+
 # 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
 def get_farmer_metrics(farmer_id):
@@ -633,36 +654,46 @@ def get_farmer_metrics(farmer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # 1. Highest active bid
+
+        sync_expired_auctions(cursor, farmer_id)
+        connection.commit()
+
+        now_pht = get_pht_now()
+
+        # 1. Highest active bid (only truly live/unexpired listings)
         cursor.execute("""
             SELECT COALESCE(MAX(current_highest_bid), MAX(starting_price), 0) as max_bid
             FROM livestock_listings
-            WHERE farmer_id = %s AND (auction_status = 'active' OR auction_status = 'live')
-        """, (farmer_id,))
+            WHERE farmer_id = %s
+              AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
+              AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
+        """, (farmer_id, now_pht))
         bid_res = cursor.fetchone()
         highest_bid = float(bid_res['max_bid'] or 0)
-        
+
         # 2. Completed count strictly where status is 'completed'
         cursor.execute("""
             SELECT COUNT(*) as completed_count
             FROM livestock_listings
-            WHERE farmer_id = %s AND auction_status = 'completed'
+            WHERE farmer_id = %s AND LOWER(COALESCE(auction_status, '')) = 'completed'
         """, (farmer_id,))
         comp_res = cursor.fetchone()
         completed_count = int(comp_res['completed_count'] or 0)
-        
-        # 3. Verification Queue / Pending Payment Count (Strictly excluding completed)
+
+        # 3. Verification Queue / Pending Payment Count (ended/expired or settlement, excluding completed)
         cursor.execute("""
             SELECT COUNT(*) as queue_count
             FROM livestock_listings
-            WHERE farmer_id = %s 
-              AND auction_status IN ('ended', 'closed', 'settlement', 'pending') 
-              AND auction_status != 'completed'
-        """, (farmer_id,))
+            WHERE farmer_id = %s
+              AND LOWER(COALESCE(auction_status, '')) != 'completed'
+              AND (
+                  LOWER(COALESCE(auction_status, '')) IN ('ended', 'closed', 'settlement', 'pending')
+                  OR (auction_ends_at IS NOT NULL AND (auction_ends_at <= NOW() OR auction_ends_at <= %s))
+              )
+        """, (farmer_id, now_pht))
         queue_res = cursor.fetchone()
         queue_count = int(queue_res['queue_count'] or 0)
-        
+
         return jsonify({
             'success': True,
             'data': {
@@ -687,11 +718,18 @@ def get_farmer_active_bid(farmer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+
+        sync_expired_auctions(cursor, farmer_id)
+        connection.commit()
+
+        now_pht = get_pht_now()
         cursor.execute("""
-            SELECT * FROM livestock_listings 
-            WHERE farmer_id = %s AND (auction_status = 'active' OR auction_status = 'live')
+            SELECT * FROM livestock_listings
+            WHERE farmer_id = %s
+              AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
+              AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
             ORDER BY current_highest_bid DESC LIMIT 1
-        """, (farmer_id,))
+        """, (farmer_id, now_pht))
         listing = cursor.fetchone()
         if listing:
             if listing.get('auction_ends_at') and isinstance(listing['auction_ends_at'], datetime):
@@ -1432,20 +1470,27 @@ def get_farmer_delivery_queue(farmer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
+        sync_expired_auctions(cursor, farmer_id)
+        connection.commit()
+
+        now_pht = get_pht_now()
         cursor.execute("""
-            SELECT l.*, 
+            SELECT l.*,
                    (SELECT MAX(bid_amount) FROM bids WHERE listing_id = l.listing_id) AS winning_bid,
                    (SELECT u.first_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_first_name,
                    (SELECT u.last_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_last_name,
                    (SELECT u.contact_number FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_contact
             FROM livestock_listings l
-            WHERE l.farmer_id = %s 
-              AND l.auction_status IN ('ended', 'closed', 'completed', 'settlement', 'pending')
+            WHERE l.farmer_id = %s
+              AND (
+                  LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'completed', 'settlement', 'pending')
+                  OR (l.auction_ends_at IS NOT NULL AND (l.auction_ends_at <= NOW() OR l.auction_ends_at <= %s))
+              )
             ORDER BY l.created_at DESC
-        """, (farmer_id,))
+        """, (farmer_id, now_pht))
         listings = cursor.fetchall()
-        
+
         for item in listings:
             if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
                 item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
@@ -1470,12 +1515,12 @@ def confirm_livestock_receipt(listing_id):
     connection = None
     cursor = None
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         buyer_id = data.get('bidderId') or data.get('buyerId')
-        
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT l.listing_id, l.farmer_id, l.animal_type, l.current_highest_bid, l.starting_price, l.auction_status,
                    (SELECT b.bid_amount FROM bids b WHERE b.listing_id = l.listing_id AND b.bidder_id = %s ORDER BY b.bid_amount DESC LIMIT 1) AS buyer_bid
@@ -1483,27 +1528,24 @@ def confirm_livestock_receipt(listing_id):
             WHERE l.listing_id = %s
         """, (buyer_id, listing_id))
         listing = cursor.fetchone()
-        
+
         if not listing:
             return jsonify({'success': False, 'message': 'Listing not found.'}), 404
-            
-        if listing['auction_status'] == 'completed':
+
+        if str(listing.get('auction_status') or '').lower() == 'completed':
             return jsonify({'success': False, 'message': 'Receipt already confirmed.'}), 400
-            
+
         farmer_id = listing['farmer_id']
         winning_amount = float(listing['buyer_bid'] or listing['current_highest_bid'] or listing['starting_price'] or 0.0)
-        ref_code = f"AUC-{int(listing_id):03d}"
-        txn_ref = f"TXN-{ref_code}"
-        desc = f"Auction Payment: {listing['animal_type']} ({ref_code})"
 
-        # 1. Deduct from buyer wallet only if not already deducted for this won auction
+        # 1. Deduct from buyer wallet only if not already deducted
         cursor.execute("""
             SELECT 1 FROM wallet_transactions
             WHERE user_id = %s
               AND LOWER(COALESCE(type, '')) IN ('debit', 'payment', 'bid_deduction')
-              AND (reference_code IN (%s, %s) OR description LIKE %s)
+              AND amount = %s
             LIMIT 1
-        """, (buyer_id, ref_code, txn_ref, f"%({ref_code})%"))
+        """, (buyer_id, winning_amount))
         already_deducted = cursor.fetchone() is not None
 
         if not already_deducted and winning_amount > 0:
@@ -1523,16 +1565,25 @@ def confirm_livestock_receipt(listing_id):
         # 3. Mark listing status as completed
         cursor.execute("UPDATE livestock_listings SET auction_status = 'completed' WHERE listing_id = %s", (listing_id,))
 
-        # 4. Log payment transaction for buyer's history
-        cursor.execute("""
-            INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
-            VALUES (%s, %s, %s, %s, 'payment', 'Completed')
-        """, (buyer_id, txn_ref, desc, winning_amount))
-        
+        # 4. Log payment transaction matching available columns
+        try:
+            ref_code = f"AUC-{int(listing_id):03d}"
+            txn_ref = f"TXN-{ref_code}"
+            desc = f"Auction Payment: {listing['animal_type']} ({ref_code})"
+            cursor.execute("""
+                INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
+                VALUES (%s, %s, %s, %s, 'payment', 'Completed')
+            """, (buyer_id, txn_ref, desc, winning_amount))
+        except Exception:
+            cursor.execute("""
+                INSERT INTO wallet_transactions (user_id, amount, type, created_at)
+                VALUES (%s, %s, 'payment', NOW())
+            """, (buyer_id, winning_amount))
+
         connection.commit()
         return jsonify({
-            'success': True, 
-            'message': f'Receipt confirmed! ₱{winning_amount:,.2f} paid and logged to your transaction history.'
+            'success': True,
+            'message': f'Receipt confirmed! ₱{winning_amount:,.2f} settled and logged to your transaction history.'
         }), 200
 
     except Exception as e:
