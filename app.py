@@ -827,51 +827,61 @@ def create_listing():
     connection = None
     cursor = None
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'message': 'Invalid or missing JSON payload.'}), 400
+
         farmer_id = data.get('farmerId')
         animal_type = data.get('animalType')
         breed = data.get('breed')
         sex = data.get('sex')
         age = data.get('age')
-        weight = float(data.get('weight', 0))
-        starting_price = float(data.get('startingPrice', 0))
+        weight = float(data.get('weight') or 0)
+        starting_price = float(data.get('startingPrice') or 0)
         auction_ends_at = data.get('auctionEndsAt')
-        images = data.get('images', [])
-        documents = data.get('documents', [])
-        
+        images = data.get('images') or []
+        documents = data.get('documents') or []
+
         if not farmer_id or not animal_type:
             return jsonify({'success': False, 'message': 'Missing required listing parameters.'}), 400
-            
+
         connection = get_db_connection()
         cursor = connection.cursor()
-        
+
         # Save arrays as JSON strings
-        image_url_str = json.dumps(images) if isinstance(images, list) else json.dumps([images] if images else [])
-        documents_str = json.dumps(documents) if isinstance(documents, list) else json.dumps([documents] if documents else [])
+        image_url_str = json.dumps(images if isinstance(images, list) else [images])
+        documents_str = json.dumps(documents if isinstance(documents, list) else [documents])
 
         query = """
-            INSERT INTO livestock_listings 
+            INSERT INTO livestock_listings
             (farmer_id, animal_type, breed, sex, age, weight, starting_price, current_highest_bid, auction_status, auction_ends_at, image_url, documents)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'live', %s, %s, %s)
         """
         cursor.execute(query, (
-            farmer_id, animal_type, breed, sex, age, weight, starting_price, starting_price, auction_ends_at, image_url_str, documents_str
+            farmer_id, animal_type, breed, sex, age, weight, starting_price,
+            starting_price, auction_ends_at, image_url_str, documents_str
         ))
         connection.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Listing published successfully to marketplace!'
         }), 201
 
+    except (ValueError, TypeError) as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'success': False, 'message': f'Invalid numeric value: {str(e)}'}), 400
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
         print("Create Listing Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
-
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 18. Fetch Listings Created by a Specific Farmer
 @app.route('/api/listings/farmer/<int:farmer_id>', methods=['GET'])
