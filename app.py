@@ -47,16 +47,25 @@ def get_db_connection():
     )
 
 # 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
-# 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
 @app.route('/api/bids', methods=['POST'])
 def place_bid():
     connection = None
     cursor = None
     try:
-        data = request.get_json()
-        buyer_id = data.get('buyerId') or session.get('user_id')
+        data = request.get_json() or {}
+        buyer_id = data.get('buyerId') or data.get('bidderId') or data.get('userId') or session.get('user_id')
         listing_id = data.get('auctionId') or data.get('listingId')
-        bid_amount = float(data.get('amount', 0))
+
+        raw_bid = data.get('bidAmount')
+        if raw_bid is None:
+            raw_bid = data.get('amount')
+        if raw_bid is None:
+            raw_bid = data.get('bid_amount')
+
+        bid_amount = float(str(raw_bid).replace(',', '').strip())
+
+        if not buyer_id or not listing_id or bid_amount <= 0:
+            return jsonify({'success': False, 'message': 'Invalid bid details.'}), 400
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
@@ -70,12 +79,16 @@ def place_bid():
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
         # 2. Check current highest bid or starting price on the listing
-        cursor.execute("SELECT current_highest_bid, starting_price FROM livestock_listings WHERE listing_id = %s", (listing_id,))
+        cursor.execute("SELECT current_highest_bid, starting_price, bid_increment FROM livestock_listings WHERE listing_id = %s", (listing_id,))
         listing = cursor.fetchone()
         if listing:
-            current_top = float(listing.get('current_highest_bid') or listing.get('starting_price') or 0)
-            if bid_amount <= current_top:
-                return jsonify({'success': False, 'message': f'Bid must be higher than current highest bid (₱{current_top:,.2f}).'}), 400
+            current_top = float(listing.get('current_highest_bid') or 0)
+            starting_price = float(listing.get('starting_price') or 0)
+            increment = float(listing.get('bid_increment') or 500)
+            min_allowed = (current_top + increment) if current_top > 0 else starting_price
+
+            if bid_amount < min_allowed:
+                return jsonify({'success': False, 'message': f'Bid must be at least ₱{min_allowed:,.2f} (minimum ₱{increment:,.2f} increment).'}), 400
 
         # 3. Insert the bid using the exact columns: listing_id and bidder_id
         cursor.execute(

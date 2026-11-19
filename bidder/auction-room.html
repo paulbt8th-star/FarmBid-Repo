@@ -659,17 +659,34 @@
 
       let hasUserEditedBid = false;
 
-            if (bidInput) {
-              bidInput.addEventListener('input', () => {
-                hasUserEditedBid = true;
-                const typedAmount = Number(String(bidInput.value).replace(/[^0-9.]/g, ''));
-                const previewAmount = typedAmount > 0 ? typedAmount : nextMinBid;
-                if (bidBtn && !bidBtn.disabled) {
-                  const btnSpan = bidBtn.querySelector('span');
-                  if (btnSpan) btnSpan.textContent = `Increase bid to ₱${previewAmount.toLocaleString('en-PH')}`;
-                }
-              });
-            }
+      function formatPesoInput(rawString) {
+        const digitsOnly = String(rawString || '').replace(/[^0-9]/g, '');
+        if (!digitsOnly) return '₱';
+        return `₱${Number(digitsOnly).toLocaleString('en-PH')}`;
+      }
+
+      if (bidInput) {
+        bidInput.addEventListener('keydown', (e) => {
+          const selectionStart = bidInput.selectionStart ?? 0;
+          const selectionEnd = bidInput.selectionEnd ?? 0;
+          if (e.key === 'Backspace' && selectionStart <= 1 && selectionEnd <= 1) {
+            e.preventDefault();
+          }
+        });
+
+        bidInput.addEventListener('input', () => {
+          hasUserEditedBid = true;
+          const digitsOnly = String(bidInput.value || '').replace(/[^0-9]/g, '');
+          bidInput.value = formatPesoInput(digitsOnly);
+
+          const typedAmount = digitsOnly ? Number(digitsOnly) : 0;
+          const previewAmount = typedAmount > 0 ? typedAmount : nextMinBid;
+          if (bidBtn && !bidBtn.disabled) {
+            const btnSpan = bidBtn.querySelector('span');
+            if (btnSpan) btnSpan.textContent = `Increase bid to ₱${previewAmount.toLocaleString('en-PH')}`;
+          }
+        });
+      }
 
       function updateCountdown() {
         const currentTime = Date.now();
