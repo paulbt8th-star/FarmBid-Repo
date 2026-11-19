@@ -360,15 +360,41 @@
         if (txns.length === 0) {
           txnTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No transactions found.</td></tr>`;
         } else {
-          txnTableBody.innerHTML = txns.map(t => `
-            <tr style="border-bottom: 1px solid var(--border-light);">
-              <td style="padding: 12px 10px; color: var(--text-muted);">${t.created_at}</td>
-              <td style="padding: 12px 10px; font-weight: 600;">${t.description}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${t.reference_code}</span></td>
-              <td style="padding: 12px 10px; font-weight: 700; color: #dc2626;">-₱${Number(t.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-              <td style="padding: 12px 10px;"><span class="badge badge-green">${t.status}</span></td>
-              <td style="padding: 12px 10px; font-weight: 600; text-align: right;">₱${Number(t.amount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
-            </tr>
-          `).join('');
+          txnTableBody.innerHTML = txns.map(t => {
+            const label = t.description || t.txn_type || t.type || 'GCash Top-up';
+            const refCode = t.reference_code || t.reference_no || t.reference || t.txn_id || t.id || 'N/A';
+            const rawStatus = String(t.status || t.txn_status || t.payment_status || 'Completed');
+            const statusLower = rawStatus.toLowerCase();
+            const typeLower = String(t.txn_type || t.type || label).toLowerCase();
+
+            const numericAmount = Number(t.amount || 0);
+            const isCredit =
+              numericAmount > 0 &&
+              (typeLower.includes('topup') ||
+                typeLower.includes('top-up') ||
+                typeLower.includes('credit') ||
+                typeLower.includes('deposit') ||
+                typeLower.includes('gcash'));
+
+            const sign = isCredit ? '+' : '-';
+            const amountColor = isCredit ? '#16a34a' : '#dc2626';
+            const badgeClass = ['paid', 'completed', 'settled', 'success'].includes(statusLower)
+              ? 'badge-green'
+              : 'badge-amber';
+
+            const balanceValue =
+              t.balance_after ?? t.wallet_balance ?? t.running_balance ?? data?.wallet_balance ?? 0;
+
+            return `
+              <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 12px 10px; color: var(--text-muted);">${t.created_at || t.date || 'N/A'}</td>
+                <td style="padding: 12px 10px; font-weight: 600;">${label}<br><span style="font-size: 0.72rem; color: var(--text-muted);">${refCode}</span></td>
+                <td style="padding: 12px 10px; font-weight: 700; color: ${amountColor};">${sign}₱${Math.abs(numericAmount).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 12px 10px;"><span class="badge ${badgeClass}">${rawStatus}</span></td>
+                <td style="padding: 12px 10px; font-weight: 600; text-align: right;">₱${Number(balanceValue).toLocaleString('en-PH', {minimumFractionDigits: 2})}</td>
+              </tr>
+            `;
+          }).join('');
         }
       }
 

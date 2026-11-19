@@ -995,7 +995,8 @@ def upload_livestock_images():
                 upload_result = cloudinary.uploader.upload(
                     file,
                     folder="farmbid/livestock",
-                    resource_type="image"
+                    resource_type="auto",
+                    access_mode="public"
                 )
                 secure_url = upload_result.get('secure_url')
                 if secure_url:
