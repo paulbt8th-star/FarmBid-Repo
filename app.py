@@ -11,6 +11,16 @@ from flask import render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 
+import cloudinary
+import cloudinary.uploader
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+    secure=True
+)
+
 # Define Philippine Standard Time (GMT+8)
 PHT = timezone(timedelta(hours=8))
 XENDIT_SECRET_KEY = "xnd_development_cOVPjzFmLKHqoI0ZUe7Evb8fJHAhH9Lfkdl4drkqhp8MZgxyazEeGf8gNayl50"
@@ -960,21 +970,17 @@ def upload_livestock_images():
 
         files = request.files.getlist('images')
         saved_urls = []
-        livestock_upload_dir = os.path.join(app.root_path, 'uploads', 'livestock')
-        os.makedirs(livestock_upload_dir, exist_ok=True)
 
         for file in files:
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                unique_name = f"livestock-{int(datetime.now().timestamp() * 1000)}-{filename}"
-                file_path = os.path.join(livestock_upload_dir, unique_name)
-
-                # Save physical file into <app.root_path>/uploads/livestock/
-                file.save(file_path)
-
-                # Generate accessible URL route
-                file_url = f"/uploads/livestock/{unique_name}"
-                saved_urls.append(file_url)
+                upload_result = cloudinary.uploader.upload(
+                    file,
+                    folder="farmbid/livestock",
+                    resource_type="image"
+                )
+                secure_url = upload_result.get('secure_url')
+                if secure_url:
+                    saved_urls.append(secure_url)
 
         return jsonify({
             'success': True,
