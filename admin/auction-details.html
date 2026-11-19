@@ -61,7 +61,6 @@
           <h1 id="listingTitle" class="page-title" style="font-size: 1.4rem;">Livestock Details</h1>
           <p id="listingSubtitle" class="page-subtitle">Loading listing details...</p>
         </div>
-        <a href="reports.html" class="btn btn-outline" style="font-size: 0.82rem; text-decoration: none;">&larr; Back to Auctions</a>
       </div>
 
       <!-- Main 2-Column Layout -->
@@ -113,7 +112,7 @@
             <div id="closesDateSub" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">Closes · --</div>
 
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #166534;">
-              🛡️ You are viewing this auction in <strong>Admin Oversight Mode</strong>.
+              You are viewing this auction in <strong>Admin Oversight Mode</strong>.
             </div>
           </div>
 
@@ -252,7 +251,7 @@
           photoBox.style.backgroundImage = `url('${auctionPhotos[0]}')`;
           photoBox.innerHTML = `
             <img id="nativeMainPhoto" src="${auctionPhotos[0]}" alt="${item.animal_type}" style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--radius-lg);">
-            <div id="nativePhotoCounter" style="position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; z-index: 5;">📷 1 / ${auctionPhotos.length} photos</div>
+            <div id="nativePhotoCounter" style="position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; z-index: 5;"> 1 / ${auctionPhotos.length} photos</div>
             ${auctionPhotos.length > 1 ? `
               <button type="button" onclick="stepAuctionPhoto(-1)" style="position: absolute; top: 50%; left: 14px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 5;">&lsaquo;</button>
               <button type="button" onclick="stepAuctionPhoto(1)" style="position: absolute; top: 50%; right: 14px; transform: translateY(-50%); background: rgba(255,255,255,0.92); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); z-index: 5;">&rsaquo;</button>
