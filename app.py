@@ -1116,46 +1116,85 @@ def create_dispute():
     connection = None
     cursor = None
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         reporter_id = data.get('reporterId')
         reported_listing_id = data.get('listingId')
         reason = data.get('reason')
         description = data.get('description')
-        
+
         if not reporter_id or not reason or not description:
             return jsonify({'success': False, 'message': 'Missing required dispute details.'}), 400
-            
+
         connection = get_db_connection()
         cursor = connection.cursor()
-        
+
+        # Ensure the live disputes table has all expected columns
+        alter_statements = [
+            "ALTER TABLE disputes ADD COLUMN report_code VARCHAR(50) NULL",
+            "ALTER TABLE disputes ADD COLUMN listing_id INT NULL",
+            "ALTER TABLE disputes ADD COLUMN reported_listing_id INT NULL",
+            "ALTER TABLE disputes ADD COLUMN reason VARCHAR(255) NULL",
+            "ALTER TABLE disputes ADD COLUMN description TEXT NULL",
+            "ALTER TABLE disputes ADD COLUMN status VARCHAR(50) DEFAULT 'open'"
+        ]
+        for stmt in alter_statements:
+            try:
+                cursor.execute(stmt)
+                connection.commit()
+            except Exception:
+                connection.rollback()  # Ignore if column already exists
+
         # Generate a unique report code (e.g., DSP-4821)
         import random
         report_code = f"DSP-{random.randint(1000, 9999)}"
-        
+
         try:
+            query = """
+                INSERT INTO disputes (
+                    report_code, listing_id, reported_listing_id,
+                    reporter_id, issue_title, reporter_statement,
+                    priority, dispute_status, reason, description, status
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'normal', 'open', %s, %s, 'pending')
+            """
+            cursor.execute(
+                query,
+                (
+                    report_code,
+                    reported_listing_id,
+                    reported_listing_id,
+                    reporter_id,
+                    reason,
+                    description,
+                    reason,
+                    description
+                )
+            )
+        except Exception:
+            connection.rollback()
             query = """
                 INSERT INTO disputes (report_code, reporter_id, listing_id, reason, description, status)
                 VALUES (%s, %s, %s, %s, %s, 'pending')
             """
             cursor.execute(query, (report_code, reporter_id, reported_listing_id, reason, description))
-        except Exception:
-            # Fallback if report_code column is not required in your exact table schema
-            query = """
-                INSERT INTO disputes (reporter_id, listing_id, reason, description, status)
-                VALUES (%s, %s, %s, %s, 'pending')
-            """
-            cursor.execute(query, (reporter_id, reported_listing_id, reason, description))
 
         connection.commit()
-        
-        return jsonify({'success': True, 'message': 'Dispute report submitted successfully.'}), 201
+
+        return jsonify({
+            'success': True,
+            'message': 'Dispute report submitted successfully.',
+            'report_code': report_code
+        }), 201
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
         print("Create Dispute Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 23. Update Dispute Status (Resolve / Dismiss)
 @app.route('/api/admin/disputes/<int:dispute_id>/status', methods=['PUT'])
