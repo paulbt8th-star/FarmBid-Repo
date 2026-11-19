@@ -781,7 +781,7 @@
 
             const resData = await response.json();
             if (response.ok && resData.success) {
-              alert('🎉 Bid placed successfully! You are now leading the auction.');
+              alert('Bid placed successfully! You are now leading the auction.');
               window.location.reload();
             } else {
               alert('Bid failed: ' + (resData.message || 'Please check your bid amount.'));
