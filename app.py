@@ -205,7 +205,7 @@ def get_bids_by_listing(listing_id):
         if cursor: cursor.close()
         if connection: connection.close()
 
-# 4. Bidder Dashboard Route (with auto-expiration sync)
+# 4. Bidder Dashboard Route
 @app.route('/api/dashboard/bidder/<int:bidder_id>', methods=['GET'])
 def get_bidder_dashboard(bidder_id):
     connection = None
@@ -213,15 +213,7 @@ def get_bidder_dashboard(bidder_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # Automatically mark expired listings as 'ended' in the database
-        cursor.execute("""
-            UPDATE livestock_listings 
-            SET auction_status = 'ended' 
-            WHERE auction_ends_at IS NOT NULL AND auction_ends_at <= NOW() AND auction_status IN ('active', 'live')
-        """)
-        connection.commit()
-        
+
         query = """
             SELECT 
                 b.bid_id, 
@@ -234,7 +226,12 @@ def get_bidder_dashboard(bidder_id):
                 l.starting_price,
                 l.current_highest_bid,
                 l.auction_status,
-                l.auction_ends_at
+                l.auction_ends_at,
+                CASE
+                    WHEN LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed')
+                      OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
+                    THEN 1 ELSE 0
+                END AS is_ended
             FROM bids b
             JOIN livestock_listings l ON b.listing_id = l.listing_id
             WHERE b.bidder_id = %s
@@ -247,11 +244,14 @@ def get_bidder_dashboard(bidder_id):
                 b['created_at'] = b['created_at'].strftime('%Y-%m-%d %H:%M:%S')
             if b.get('auction_ends_at') and isinstance(b['auction_ends_at'], datetime):
                 b['auction_ends_at'] = b['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
-        
+
         total_bids = len(bids)
         total_committed = sum(float(b['bid_amount'] or 0) for b in bids)
-        won_count = sum(1 for b in bids if b.get('auction_status') == 'ended' and float(b['bid_amount']) >= float(b['current_highest_bid']))
-        
+        won_count = sum(
+            1 for b in bids
+            if b.get('is_ended') == 1 and float(b['bid_amount'] or 0) >= float(b['current_highest_bid'] or 0)
+        )
+
         return jsonify({
             'success': True,
             'data': {
@@ -266,8 +266,10 @@ def get_bidder_dashboard(bidder_id):
         print("Database Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 5. Admin Dashboard Route
 @app.route('/api/dashboard/admin', methods=['GET'])
