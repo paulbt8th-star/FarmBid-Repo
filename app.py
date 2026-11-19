@@ -46,7 +46,7 @@ def get_db_connection():
         connection_timeout=5
     )
 
-# 1. Bidder Bids Route (Escrow Lock & Automatic Outbid Refund)
+# 1. Bidder Bids Route (Active Bid Hold Calculation Without Premature Wallet Balance Deduction)
 @app.route('/api/bids', methods=['POST'])
 def place_bid():
     connection = None
@@ -70,13 +70,34 @@ def place_bid():
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Check user's current wallet balance
+        # 1. Get user's wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
         wallet = cursor.fetchone()
-        balance = float(wallet['wallet_balance']) if wallet else 0.00
+        balance = float(wallet['wallet_balance']) if wallet and wallet.get('wallet_balance') is not None else 0.00
 
-        if balance < bid_amount:
-            return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
+        # Calculate user's current committed funds across active listings (excluding current listing_id)
+        cursor.execute(
+            """
+            SELECT b.listing_id, MAX(b.bid_amount) AS max_bid
+            FROM bids b
+            JOIN livestock_listings l ON b.listing_id = l.listing_id
+            WHERE b.bidder_id = %s
+              AND b.listing_id != %s
+              AND LOWER(COALESCE(l.auction_status, 'live')) NOT IN ('ended', 'closed', 'completed')
+              AND (l.auction_ends_at IS NULL OR l.auction_ends_at > NOW())
+            GROUP BY b.listing_id
+            """,
+            (buyer_id, listing_id)
+        )
+        other_active_bids = cursor.fetchall()
+        committed_other_listings = sum(float(row.get('max_bid') or 0) for row in other_active_bids)
+        available_for_this_listing = max(0.00, balance - committed_other_listings)
+
+        if bid_amount > available_for_this_listing:
+            return jsonify({
+                'success': False,
+                'message': f'Insufficient available wallet balance. Available: ₱{available_for_this_listing:,.2f}.'
+            }), 400
 
         # 2. Check current highest bid or starting price on the listing
         cursor.execute("SELECT current_highest_bid, starting_price FROM livestock_listings WHERE listing_id = %s", (listing_id,))
@@ -88,11 +109,14 @@ def place_bid():
             min_allowed = (current_top + increment) if current_top > 0 else starting_price
 
             if bid_amount < min_allowed:
-                return jsonify({'success': False, 'message': f'Bid must be at least ₱{min_allowed:,.2f} (minimum ₱{increment:,.2f} increment).'}), 400
+                return jsonify({
+                    'success': False,
+                    'message': f'Bid must be at least ₱{min_allowed:,.2f} (minimum ₱{increment:,.2f} increment).'
+                }), 400
 
-        # 3. Insert the bid using the exact columns: listing_id and bidder_id
+        # 3. Insert the bid using listing_id and bidder_id (do NOT deduct from wallets.wallet_balance until won/settled)
         cursor.execute(
-            """INSERT INTO bids (listing_id, bidder_id, bid_amount, created_at) 
+            """INSERT INTO bids (listing_id, bidder_id, bid_amount, created_at)
                VALUES (%s, %s, %s, NOW())""",
             (listing_id, buyer_id, bid_amount)
         )
@@ -102,17 +126,6 @@ def place_bid():
             """UPDATE livestock_listings SET current_highest_bid = %s WHERE listing_id = %s""",
             (bid_amount, listing_id)
         )
-
-        # Deduct / hold bid amount from available wallet_balance
-        cursor.execute(
-            """UPDATE wallets
-               SET wallet_balance = wallet_balance - %s
-               WHERE user_id = %s AND wallet_balance >= %s""",
-            (bid_amount, buyer_id, bid_amount)
-        )
-        if cursor.rowcount == 0:
-            connection.rollback()
-            return jsonify({'success': False, 'message': 'Insufficient available wallet balance.'}), 400
 
         connection.commit()
 
