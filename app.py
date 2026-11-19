@@ -1566,34 +1566,18 @@ def confirm_livestock_receipt(listing_id):
         # 3. Mark listing status as completed
         cursor.execute("UPDATE livestock_listings SET auction_status = 'completed' WHERE listing_id = %s", (listing_id,))
 
-        # 4. Log payment transaction matching available columns
-        try:
-            ref_code = f"AUC-{int(listing_id):03d}"
-            txn_ref = f"TXN-{ref_code}"
-            desc = f"Auction Payment: {listing['animal_type']} ({ref_code})"
-            cursor.execute("""
-                INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
-                VALUES (%s, %s, %s, %s, 'payment', 'Completed')
-            """, (buyer_id, txn_ref, desc, winning_amount))
-        except Exception:
-            cursor.execute("""
-                INSERT INTO wallet_transactions (user_id, amount, type, created_at)
-                VALUES (%s, %s, 'payment', NOW())
-            """, (buyer_id, winning_amount))
+        # 4. Log debit transaction matching available wallet_transactions columns
+        cursor.execute("""
+            INSERT INTO wallet_transactions (user_id, amount, type, created_at)
+            VALUES (%s, %s, 'debit', NOW())
+        """, (buyer_id, winning_amount))
 
         connection.commit()
+
         return jsonify({
             'success': True,
             'message': f'Receipt confirmed! ₱{winning_amount:,.2f} settled and logged to your transaction history.'
         }), 200
-
-    except Exception as e:
-        if connection: connection.rollback()
-        print("Confirm Receipt Error:", str(e))
-        return jsonify({'success': False, 'message': str(e)}), 500
-    finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
 
 # Get Buyer Wallet Transactions
 @app.route('/api/buyer/transactions/<int:buyer_id>', methods=['GET'])
