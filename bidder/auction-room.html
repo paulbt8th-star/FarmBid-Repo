@@ -519,24 +519,26 @@
         bidderDocsContainer.innerHTML = `<div style="font-size: 0.82rem; color: #666; font-style: italic;">No compliance documents uploaded for this listing.</div>`;
       } else {
         bidderDocsContainer.innerHTML = docs.map((doc, idx) => {
-      const rawDoc = typeof doc === 'string' ? doc : (doc?.url || doc?.file_url || '');
-      const docHref = /^https?:\/\//i.test(rawDoc)
-        ? rawDoc
-        : `/uploads/livestock/${rawDoc.replace(/^\/+/, '')}`;
-      const fileName = decodeURIComponent(rawDoc.split('/').pop() || `Document_${idx + 1}`);
+        const rawDoc = typeof doc === 'string' ? doc : (doc?.url || doc?.file_url || '');
+        const cleanDoc = String(rawDoc).trim();
+        const isFullUrl = /^https?:\/\//i.test(cleanDoc) || cleanDoc.includes('res.cloudinary.com');
+        const docHref = isFullUrl
+          ? (cleanDoc.startsWith('http') ? cleanDoc : `https://${cleanDoc.replace(/^\/+/, '')}`)
+          : `/uploads/livestock/${cleanDoc.replace(/^(\/?uploads\/livestock\/)+/i, '')}`;
+        const fileName = decodeURIComponent(cleanDoc.split('/').pop() || `Document_${idx + 1}`);
 
-      return `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-canvas, #f9fafb); border: 1px solid var(--border-light, #e5e7eb); border-radius: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-            <span style="font-size: 1.1rem;">📄</span>
-            <span style="font-size: 0.82rem; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px;" title="${fileName}">${fileName}</span>
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-canvas, #f9fafb); border: 1px solid var(--border-light, #e5e7eb); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+              <span style="font-size: 1.1rem;">📄</span>
+              <span style="font-size: 0.82rem; font-weight: 600; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px;" title="${fileName}">${fileName}</span>
+            </div>
+            <a href="${docHref}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="font-size: 0.75rem; padding: 5px 12px; text-decoration: none; white-space: nowrap;">
+              Open / View &rarr;
+            </a>
           </div>
-          <a href="${docHref}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="font-size: 0.75rem; padding: 5px 12px; text-decoration: none; white-space: nowrap;">
-            Open / View &rarr;
-          </a>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
     }
 
       document.getElementById('specBreed').textContent = item.breed || 'Not specified';
