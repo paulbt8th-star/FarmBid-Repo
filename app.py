@@ -41,7 +41,12 @@ def get_db_connection():
         host=os.environ.get("DB_HOST") or os.environ.get("MYSQLHOST") or "localhost",
         user=os.environ.get("DB_USER") or os.environ.get("MYSQLUSER") or "root",
         password=os.environ.get("DB_PASSWORD") or os.environ.get("MYSQLPASSWORD") or "",
-        database="farmbid_db" or os.environ.get("DB_NAME") or os.environ.get("MYSQL_DATABASE") or os.environ.get("MYSQLDATABASE"),
+        database=(
+            os.environ.get("DB_NAME")
+            or os.environ.get("MYSQL_DATABASE")
+            or os.environ.get("MYSQLDATABASE")
+            or "farmbid_db"
+        ),
         port=int(os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or 3306),
         connection_timeout=5
     )
@@ -1239,23 +1244,29 @@ def update_dispute_status(dispute_id):
     connection = None
     cursor = None
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
         new_status = data.get('status')
-        
+
         connection = get_db_connection()
         cursor = connection.cursor()
-        
-        query = "UPDATE disputes SET status = %s WHERE id = %s"
-        cursor.execute(query, (new_status, dispute_id))
+
+        try:
+            cursor.execute("UPDATE disputes SET status = %s, dispute_status = %s WHERE dispute_id = %s", (new_status, new_status, dispute_id))
+        except Exception:
+            connection.rollback()
+            cursor.execute("UPDATE disputes SET status = %s WHERE id = %s", (new_status, dispute_id))
+
         connection.commit()
-        
         return jsonify({'success': True, 'message': f'Dispute marked as {new_status}.'}), 200
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # Admin Marketplace Auctions & Reports API
 @app.route('/api/admin/reports', methods=['GET'])
