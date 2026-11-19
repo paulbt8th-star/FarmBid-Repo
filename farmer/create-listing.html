@@ -383,7 +383,7 @@
         const data = await response.json();
 
         if (response.ok && data.success) {
-          alert('Listing published successfully with photos and verification documents!');
+          alert('Listing published successfully');
           window.location.href = 'manage-listings.html';
         } else {
           alert('Failed to create listing: ' + (data.message || 'Please check your inputs.'));

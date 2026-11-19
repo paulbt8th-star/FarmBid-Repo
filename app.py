@@ -1483,21 +1483,20 @@ def get_buyer_transactions(buyer_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         cursor.execute("""
-            SELECT * FROM wallet_transactions 
-            WHERE user_id = %s 
-            ORDER BY created_at ASC, id ASC
+            SELECT * FROM wallet_transactions
+            WHERE user_id = %s
+            ORDER BY created_at ASC
         """, (buyer_id,))
         rows = cursor.fetchall()
 
         running_balance = 0.0
         for t in rows:
             amt = float(t.get('amount') or 0.0)
-            t_type = str(t.get('type') or '').lower()
+            t_type = str(t.get('type') or t.get('txn_type') or '').lower()
 
             if t_type in ('debit', 'payment', 'withdrawal'):
                 running_balance = max(0.0, running_balance - amt)
             else:
-                # 'credit', 'topup', 'refund', etc.
                 running_balance += amt
 
             t['running_balance'] = round(running_balance, 2)
@@ -1505,15 +1504,16 @@ def get_buyer_transactions(buyer_id):
             if t.get('created_at') and isinstance(t['created_at'], datetime):
                 t['created_at'] = t['created_at'].strftime('%Y-%m-%d %H:%M:%S')
 
-        # Return newest first for table display while keeping each row's historical running_balance intact
         rows.reverse()
         return jsonify({'success': True, 'data': rows}), 200
     except Exception as e:
         print("Transactions API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # Get Buyer Notifications API
 @app.route('/api/buyer/notifications/<path:user_id>', methods=['GET'])
