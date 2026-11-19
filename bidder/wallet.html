@@ -366,7 +366,7 @@
             const rawStatus = String(t.status || t.txn_status || t.payment_status || 'Completed');
             const statusLower = rawStatus.toLowerCase();
             const typeLower = String(t.txn_type || t.type || label).toLowerCase();
-
+            
             const numericAmount = Number(t.amount || 0);
             const isCredit =
               numericAmount > 0 &&
@@ -383,7 +383,7 @@
               : 'badge-amber';
 
             const balanceValue =
-              t.balance_after ?? t.wallet_balance ?? t.running_balance ?? data?.wallet_balance ?? 0;
+              t.balance_after ?? t.wallet_balance ?? t.running_balance ?? walletResult?.data?.wallet_balance ?? 0;
 
             return `
               <tr style="border-bottom: 1px solid var(--border-light);">
