@@ -286,6 +286,39 @@
       if (emailEl) emailEl.textContent = user.email || '';
     }
 
+    // Profile Dropdown Toggle & Logout Handler
+    const profileBtn = document.getElementById('profileDropdownBtn');
+    const profileMenu = document.getElementById('profileDropdownMenu');
+    const notifDropdownEl = document.getElementById('notificationDropdown');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (profileBtn && profileMenu) {
+      profileBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = profileMenu.style.display === 'block';
+        profileMenu.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen && notifDropdownEl) {
+          notifDropdownEl.style.display = 'none';
+        }
+      });
+
+      profileMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+
+      document.addEventListener('click', () => {
+        profileMenu.style.display = 'none';
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = '../auth/login.html';
+      });
+    }
+
     const bidderId = user.user_id || user.id || user.userId;
     const liveGrid = document.getElementById('bidHistoryGrid') || document.getElementById('liveBidsGrid');
 
