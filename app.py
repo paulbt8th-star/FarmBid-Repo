@@ -957,23 +957,25 @@ def upload_livestock_images():
     try:
         if 'images' not in request.files:
             return jsonify({'success': False, 'message': 'No files provided.'}), 400
-            
+
         files = request.files.getlist('images')
         saved_urls = []
-        
+        livestock_upload_dir = os.path.join(app.root_path, 'uploads', 'livestock')
+        os.makedirs(livestock_upload_dir, exist_ok=True)
+
         for file in files:
             if file and file.filename != '':
                 filename = secure_filename(file.filename)
                 unique_name = f"livestock-{int(datetime.now().timestamp() * 1000)}-{filename}"
-                file_path = os.path.join(UPLOAD_FOLDER, unique_name)
-                
-                # Save physical file into uploads/livestock/ folder
+                file_path = os.path.join(livestock_upload_dir, unique_name)
+
+                # Save physical file into <app.root_path>/uploads/livestock/
                 file.save(file_path)
-                
+
                 # Generate accessible URL route
                 file_url = f"/uploads/livestock/{unique_name}"
                 saved_urls.append(file_url)
-                
+
         return jsonify({
             'success': True,
             'images': saved_urls
