@@ -234,7 +234,68 @@ def get_bids_by_listing(listing_id):
     finally:
         if cursor: cursor.close()
         if connection: connection.close()
+        
+def settle_won_auctions_for_buyer(cursor, buyer_id):
+    """Deducts winning bid amounts once from wallets.wallet_balance for ended auctions won by buyer_id."""
+    cursor.execute("""
+        SELECT
+            l.listing_id,
+            l.animal_type,
+            MAX(b.bid_amount) AS winning_bid
+        FROM bids b
+        JOIN livestock_listings l ON b.listing_id = l.listing_id
+        WHERE b.bidder_id = %s
+          AND (
+              LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'settlement', 'completed')
+              OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
+          )
+          AND b.bid_amount >= COALESCE(l.current_highest_bid, 0)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM bids b2
+              WHERE b2.listing_id = l.listing_id
+                AND b2.bid_amount > b.bid_amount
+          )
+        GROUP BY l.listing_id, l.animal_type
+    """, (buyer_id,))
+    won_listings = cursor.fetchall() or []
 
+    for win in won_listings:
+        listing_id = win.get('listing_id')
+        amount = float(win.get('winning_bid') or 0.0)
+        if not listing_id or amount <= 0:
+            continue
+
+        ref_code = f"AUC-{int(listing_id):03d}"
+        desc = f"Winning bid deduction: {win.get('animal_type') or 'Livestock'} ({ref_code})"
+
+        cursor.execute("""
+            SELECT 1 FROM wallet_transactions
+            WHERE user_id = %s
+              AND LOWER(COALESCE(type, '')) IN ('debit', 'payment', 'bid_deduction')
+              AND (reference_code = %s OR description LIKE %s)
+            LIMIT 1
+        """, (buyer_id, ref_code, f"%({ref_code})%"))
+        if cursor.fetchone():
+            continue
+
+        cursor.execute("""
+            UPDATE wallets
+            SET wallet_balance = GREATEST(0, COALESCE(wallet_balance, 0) - %s)
+            WHERE user_id = %s
+        """, (amount, buyer_id))
+
+        try:
+            cursor.execute("""
+                INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
+                VALUES (%s, %s, %s, %s, 'debit', 'Completed')
+            """, (buyer_id, ref_code, desc, amount))
+        except Exception:
+            cursor.execute("""
+                INSERT INTO wallet_transactions (user_id, amount, type, created_at)
+                VALUES (%s, %s, 'debit', NOW())
+            """, (buyer_id, amount))
+            
 # 4. Bidder Dashboard Route
 @app.route('/api/dashboard/bidder/<int:bidder_id>', methods=['GET'])
 def get_bidder_dashboard(bidder_id):
@@ -243,6 +304,9 @@ def get_bidder_dashboard(bidder_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+
+        settle_won_auctions_for_buyer(cursor, bidder_id)
+        connection.commit()
 
         query = """
             SELECT 
@@ -683,6 +747,7 @@ def update_farmer_settings(farmer_id):
         if cursor: cursor.close()
         if connection: connection.close()
 
+
 # 14. Get Buyer Wallet and Financial Breakdown (Accurate Committed Funds Calculation)
 @app.route('/api/buyer/wallet/<int:buyer_id>', methods=['GET'])
 def get_buyer_wallet(buyer_id):
@@ -691,6 +756,9 @@ def get_buyer_wallet(buyer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+
+        settle_won_auctions_for_buyer(cursor, buyer_id)
+        connection.commit()
 
         # Get wallet balance
         cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (buyer_id,))
@@ -1434,31 +1502,42 @@ def confirm_livestock_receipt(listing_id):
             
         farmer_id = listing['farmer_id']
         winning_amount = float(listing['buyer_bid'] or listing['current_highest_bid'] or listing['starting_price'] or 0.0)
-        
-        # 1. Deduct from buyer wallet balance permanently
-        cursor.execute("SELECT wallet_balance FROM users WHERE user_id = %s", (buyer_id,))
-        buyer_row = cursor.fetchone()
-        buyer_balance = float(buyer_row['wallet_balance'] or 0.0) if buyer_row else 0.0
-        new_buyer_balance = max(0.0, buyer_balance - winning_amount)
-        cursor.execute("UPDATE users SET wallet_balance = %s WHERE user_id = %s", (new_buyer_balance, buyer_id))
-        
-        # 2. Credit directly to farmer wallet balance
+        ref_code = f"AUC-{int(listing_id):03d}"
+        txn_ref = f"TXN-{ref_code}"
+        desc = f"Auction Payment: {listing['animal_type']} ({ref_code})"
+
+        # 1. Deduct from buyer wallet only if not already deducted for this won auction
         cursor.execute("""
-            UPDATE users 
-            SET wallet_balance = COALESCE(wallet_balance, 0) + %s 
+            SELECT 1 FROM wallet_transactions
+            WHERE user_id = %s
+              AND LOWER(COALESCE(type, '')) IN ('debit', 'payment', 'bid_deduction')
+              AND (reference_code IN (%s, %s) OR description LIKE %s)
+            LIMIT 1
+        """, (buyer_id, ref_code, txn_ref, f"%({ref_code})%"))
+        already_deducted = cursor.fetchone() is not None
+
+        if not already_deducted and winning_amount > 0:
+            cursor.execute("""
+                UPDATE wallets
+                SET wallet_balance = GREATEST(0, COALESCE(wallet_balance, 0) - %s)
+                WHERE user_id = %s
+            """, (winning_amount, buyer_id))
+
+        # 2. Credit farmer wallet
+        cursor.execute("""
+            UPDATE wallets
+            SET wallet_balance = COALESCE(wallet_balance, 0) + %s
             WHERE user_id = %s
         """, (winning_amount, farmer_id))
-        
+
         # 3. Mark listing status as completed
         cursor.execute("UPDATE livestock_listings SET auction_status = 'completed' WHERE listing_id = %s", (listing_id,))
-        
-        # 4. Log transaction into wallet_transactions for the buyer's history
-        ref_code = f"TXN-AUC-{str(listing_id).padStart(3, '0') if hasattr(str(listing_id), 'padStart') else str(listing_id).zfill(3)}"
-        desc = f"Auction Payment: {listing['animal_type']} (AUC-{str(listing_id).zfill(3)})"
+
+        # 4. Log payment transaction for buyer's history
         cursor.execute("""
             INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
             VALUES (%s, %s, %s, %s, 'payment', 'Completed')
-        """, (buyer_id, ref_code, desc, winning_amount))
+        """, (buyer_id, txn_ref, desc, winning_amount))
         
         connection.commit()
         return jsonify({
