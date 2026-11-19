@@ -1578,6 +1578,16 @@ def confirm_livestock_receipt(listing_id):
             'success': True,
             'message': f'Receipt confirmed! ₱{winning_amount:,.2f} settled and logged to your transaction history.'
         }), 200
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print("Confirm Receipt Error:", str(e))
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # Get Buyer Wallet Transactions
 @app.route('/api/buyer/transactions/<int:buyer_id>', methods=['GET'])
