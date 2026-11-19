@@ -350,7 +350,7 @@
         const historyTableBody = document.getElementById('withdrawalTableBody');
         if (historyTableBody) {
           if (withdrawals.length === 0) {
-            historyTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No GCash withdrawal records yet.</td></tr>`;
+            historyTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #666; padding: 20px; font-style: italic;">No withdrawal records yet.</td></tr>`;
           } else {
             historyTableBody.innerHTML = withdrawals.map(w => `
               <tr style="border-bottom: 1px solid var(--border-light);">
