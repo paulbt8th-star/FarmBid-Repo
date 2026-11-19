@@ -657,6 +657,20 @@
       const bidInput = document.getElementById('nextBid');
       const bidBtn = document.getElementById('placeBidBtn');
 
+      let hasUserEditedBid = false;
+
+            if (bidInput) {
+              bidInput.addEventListener('input', () => {
+                hasUserEditedBid = true;
+                const typedAmount = Number(String(bidInput.value).replace(/[^0-9.]/g, ''));
+                const previewAmount = typedAmount > 0 ? typedAmount : nextMinBid;
+                if (bidBtn && !bidBtn.disabled) {
+                  const btnSpan = bidBtn.querySelector('span');
+                  if (btnSpan) btnSpan.textContent = `Increase bid to ₱${previewAmount.toLocaleString('en-PH')}`;
+                }
+              });
+            }
+
       function updateCountdown() {
         const currentTime = Date.now();
         const distance = endsAtTimestamp > 0 ? endsAtTimestamp - currentTime : 0;
@@ -699,15 +713,19 @@
 
           if (endedBanner) endedBanner.style.display = 'none';
 
-          if (bidInput && !bidInput.disabled) {
+          if (bidInput && !bidInput.disabled && !hasUserEditedBid) {
             bidInput.value = `₱${nextMinBid.toLocaleString('en-PH')}`;
             bidInput.min = nextMinBid;
             bidInput.step = 500;
           }
 
           if (bidBtn && !bidBtn.disabled) {
+            const currentTyped = hasUserEditedBid && bidInput
+              ? Number(String(bidInput.value).replace(/[^0-9.]/g, ''))
+              : nextMinBid;
+            const labelAmount = currentTyped > 0 ? currentTyped : nextMinBid;
             const btnSpan = bidBtn.querySelector('span');
-            if (btnSpan) btnSpan.textContent = `Increase bid to ₱${nextMinBid.toLocaleString('en-PH')}`;
+            if (btnSpan) btnSpan.textContent = `Increase bid to ₱${labelAmount.toLocaleString('en-PH')}`;
           }
         }
       }
@@ -726,6 +744,11 @@
 
           const rawVal = bidInput ? String(bidInput.value).replace(/[^0-9.]/g, '') : nextMinBid;
           const bidAmount = Number(rawVal);
+
+          if (!bidAmount || bidAmount < nextMinBid) {
+            alert(`Bid must be at least ₱${nextMinBid.toLocaleString('en-PH')} (minimum ₱500 increment).`);
+            return;
+          }
 
           try {
             const response = await fetch('/api/bids', {
