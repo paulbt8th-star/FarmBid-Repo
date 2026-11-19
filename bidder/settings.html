@@ -157,6 +157,14 @@
     const profileBtn = document.getElementById('profileDropdownBtn');
     const profileMenu = document.getElementById('profileDropdownMenu');
 
+    if (notifBtn && notifDropdown) {
+      notifBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (profileMenu) profileMenu.style.display = 'none';
+        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+    }
+
     if (profileBtn && profileMenu) {
       profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -300,23 +308,24 @@
   const notifList = document.getElementById('notificationList');
 
   if (notifBtn && notifDropdown) {
-      notifBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const profileMenu = document.getElementById('profileDropdownMenu');
-        if (profileMenu) profileMenu.style.display = 'none';
+    notifBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = notifDropdown.style.display === 'block';
+      notifDropdown.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen && notifBadge) {
+        notifBadge.style.display = 'none';
+        localStorage.setItem('farmbid_notifications_read', 'true');
+      }
+    });
 
-        const isOpen = notifDropdown.style.display === 'block';
-        notifDropdown.style.display = isOpen ? 'none' : 'block';
-        if (!isOpen && notifBadge) {
-          notifBadge.style.display = 'none';
-          localStorage.setItem('farmbid_notifications_read', 'true');
-        }
-      });
+    notifDropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
 
-      notifDropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-      });
-    }
+    document.addEventListener('click', () => {
+      notifDropdown.style.display = 'none';
+    });
+  }
 
   try {
     const res = await fetch(`/api/buyer/notifications/${bidderId}`);

@@ -529,23 +529,22 @@
     const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 
     if (notifBtn && notifDropdown) {
-      notifBtn.addEventListener('click', (e) => {
+      notifBtn.onclick = (e) => {
         e.stopPropagation();
+        const profileMenu = document.getElementById('profileDropdownMenu');
+        if (profileMenu) profileMenu.style.display = 'none';
+
         const isOpen = notifDropdown.style.display === 'block';
         notifDropdown.style.display = isOpen ? 'none' : 'block';
         if (!isOpen && notifBadge) {
           notifBadge.style.display = 'none';
           localStorage.setItem('farmbid_notifications_read', 'true');
         }
-      });
+      };
 
-      notifDropdown.addEventListener('click', (e) => {
+      notifDropdown.onclick = (e) => {
         e.stopPropagation();
-      });
-
-      document.addEventListener('click', () => {
-        notifDropdown.style.display = 'none';
-      });
+      };
     }
 
     try {
