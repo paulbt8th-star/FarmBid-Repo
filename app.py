@@ -79,12 +79,12 @@ def place_bid():
             return jsonify({'success': False, 'message': 'Insufficient available wallet balance for escrow lock. Please top up.'}), 400
 
         # 2. Check current highest bid or starting price on the listing
-        cursor.execute("SELECT current_highest_bid, starting_price, bid_increment FROM livestock_listings WHERE listing_id = %s", (listing_id,))
+        cursor.execute("SELECT current_highest_bid, starting_price FROM livestock_listings WHERE listing_id = %s", (listing_id,))
         listing = cursor.fetchone()
         if listing:
             current_top = float(listing.get('current_highest_bid') or 0)
             starting_price = float(listing.get('starting_price') or 0)
-            increment = float(listing.get('bid_increment') or 500)
+            increment = 500.0
             min_allowed = (current_top + increment) if current_top > 0 else starting_price
 
             if bid_amount < min_allowed:
