@@ -337,14 +337,6 @@
     const profileBtn = document.getElementById('profileDropdownBtn');
     const profileMenu = document.getElementById('profileDropdownMenu');
 
-    if (notifBtn && notifDropdown) {
-      notifBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (profileMenu) profileMenu.style.display = 'none';
-        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
-      });
-    }
-
     if (profileBtn && profileMenu) {
       profileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
