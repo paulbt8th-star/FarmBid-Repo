@@ -385,10 +385,10 @@
       if (!walletResult.success) throw new Error(walletResult.message);
 
       const walletData = walletResult.data;
-      const rawBids = (dashboardResult.success && dashboardResult.data && dashboardResult.data.bids) 
-        ? dashboardResult.data.bids 
+      const rawBids = (dashboardResult.success && dashboardResult.data && dashboardResult.data.bids)
+        ? dashboardResult.data.bids
         : (walletData.bids || []);
-        
+
       const now = new Date();
 
       const listingsMap = {};
@@ -402,11 +402,11 @@
       const uniqueListings = Object.values(listingsMap).map(item => {
         item.userBids.sort((x, y) => Number(y.bid_amount) - Number(x.bid_amount));
         const highestUserBid = Number(item.userBids[0].bid_amount);
-        
+
         const rawStatus = String(item.auction_status || 'live').toLowerCase();
         const endsAt = parseLocalDate(item.auction_ends_at);
         const isExpired = endsAt ? now > endsAt : false;
-        
+
         const isClosed = isExpired || ['ended', 'closed', 'completed'].includes(rawStatus);
         const currentHighest = Number(item.current_highest_bid || item.starting_price || 0);
         const isWinning = isClosed && (highestUserBid >= currentHighest);
@@ -421,17 +421,28 @@
       });
 
       const activeListings = uniqueListings.filter(l => !l.isClosed);
-      
-      const walletBalance = (walletData.wallet_balance !== undefined && walletData.wallet_balance !== null) ? Number(walletData.wallet_balance) : 0;
-      const committedFunds = Number(walletData.committed_funds || 0);
-      const availableMoney = Number(walletData.available_funds || Math.max(0, walletBalance - committedFunds));
+
+      const walletBalance = (walletData.wallet_balance !== undefined && walletData.wallet_balance !== null)
+        ? Number(walletData.wallet_balance)
+        : 0;
+
+      const activeCommittedFromBids = activeListings.reduce(
+        (sum, item) => sum + Number(item.highestUserBid || 0),
+        0
+      );
+
+      const committedFunds = activeCommittedFromBids > 0
+        ? activeCommittedFromBids
+        : Number(walletData.committed_funds || 0);
+
+      const availableMoney = Math.max(0, walletBalance - committedFunds);
       const availablePercent = walletBalance > 0 ? ((availableMoney / walletBalance) * 100).toFixed(1) : 0;
       const activeBidsCount = activeListings.length;
 
       document.getElementById('walletBalanceVal').textContent = `₱${walletBalance.toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
       document.getElementById('committedFundsVal').textContent = `₱${committedFunds.toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
       document.getElementById('committedSubtext').textContent = `Across ${activeBidsCount} active bids`;
-      
+
       document.getElementById('availableMoneyVal').textContent = `₱${availableMoney.toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
       document.getElementById('availableSubtext').textContent = `${availablePercent}% available`;
 
@@ -466,10 +477,9 @@
       }
 
       const pendingTableBody = document.getElementById('pendingReceivableTableBody');
-      // Corrected filter for Pending Receivables on Bidder Dashboard
       const pendingItems = uniqueListings.filter(l => l.isClosed && l.isWinning && String(l.auction_status || '').toLowerCase() !== 'completed');
       if (pendingTableBody) {
-        pendingTableBody.innerHTML = pendingItems.length === 0 
+        pendingTableBody.innerHTML = pendingItems.length === 0
           ? `<tr><td colspan="4" style="text-align: center; color: #666; padding: 24px;">No pending receivables at the moment.</td></tr>`
           : pendingItems.map((item, index) => `
             <tr>
@@ -484,7 +494,7 @@
       const wonContainer = document.getElementById('wonBiddingContainer');
       const wonItems = uniqueListings.filter(l => l.isClosed && l.isWinning);
       if (wonContainer) {
-        wonContainer.innerHTML = wonItems.length === 0 
+        wonContainer.innerHTML = wonItems.length === 0
           ? `<div style="padding: 20px; text-align: center; color: #666; background: #fafafa; border-radius: 8px; border: 1px dashed #eaeaea;"><p style="font-weight: 600; color: #333; font-size: 0.85rem;">No won auctions yet</p><p style="color: #777; font-size: 0.78rem;">Your completed winning bids will appear here.</p></div>`
           : `
             <div style="border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px; background-color: #fafdfa;">
@@ -502,6 +512,8 @@
     } catch (err) {
       console.error('Error connecting to backend dashboard API:', err);
     }
+
+    initBuyerNotifications();
   });
 
   // Global Notification Bell & Dropdown Initializer for Bidder Pages
@@ -514,11 +526,21 @@
     const notifDropdown = document.getElementById('notificationDropdown');
     const notifList = document.getElementById('notificationList');
     const notifBadge = document.getElementById('notifBadge');
+    const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
 
     if (notifBtn && notifDropdown) {
       notifBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        notifDropdown.style.display = notifDropdown.style.display === 'block' ? 'none' : 'block';
+        const isOpen = notifDropdown.style.display === 'block';
+        notifDropdown.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen && notifBadge) {
+          notifBadge.style.display = 'none';
+          localStorage.setItem('farmbid_notifications_read', 'true');
+        }
+      });
+
+      notifDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
       });
 
       document.addEventListener('click', () => {
@@ -533,7 +555,7 @@
       if (res.ok && result.success) {
         const notifs = result.data || [];
         if (notifs.length > 0) {
-          if (notifBadge) notifBadge.style.display = 'block';
+          if (notifBadge && !isRead) notifBadge.style.display = 'block';
           if (notifList) {
             notifList.innerHTML = notifs.map(n => `
               <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
@@ -549,64 +571,6 @@
       console.error('Error fetching notifications:', err);
     }
   }
-
-  // Call this inside your DOMContentLoaded event listener on all bidder pages
-  initBuyerNotifications();
-
-  document.addEventListener('DOMContentLoaded', async () => {
-  const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
-  if (!user || user.role !== 'bidder') return;
-  const bidderId = user.user_id || user.id || user.userId;
-
-  const notifBtn = document.getElementById('notificationBtn');
-  const notifDropdown = document.getElementById('notificationDropdown');
-  const notifBadge = document.getElementById('notifBadge');
-  const notifList = document.getElementById('notificationList');
-
-  if (notifBtn && notifDropdown) {
-    notifBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = notifDropdown.style.display === 'block';
-      notifDropdown.style.display = isOpen ? 'none' : 'block';
-      if (!isOpen && notifBadge) {
-        notifBadge.style.display = 'none';
-        localStorage.setItem('farmbid_notifications_read', 'true');
-      }
-    });
-
-    notifDropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-
-    document.addEventListener('click', () => {
-      notifDropdown.style.display = 'none';
-    });
-  }
-
-  try {
-    const res = await fetch(`/api/buyer/notifications/${bidderId}`);
-    const result = await res.json();
-    const isRead = localStorage.getItem('farmbid_notifications_read') === 'true';
-
-    if (res.ok && result.success) {
-      const notifs = result.data || [];
-      if (notifs.length > 0) {
-        if (notifBadge && !isRead) notifBadge.style.display = 'block';
-        if (notifList) {
-          notifList.innerHTML = notifs.map(n => `
-            <div style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
-              <div style="font-weight: 700; color: #111; font-size: 0.82rem;">${n.title}</div>
-              <div style="color: #555; font-size: 0.78rem; margin-top: 2px;">${n.message}</div>
-              <div style="color: #888; font-size: 0.7rem; margin-top: 2px;">${n.time}</div>
-            </div>
-          `).join('');
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Error fetching notifications:', err);
-  }
-});
 </script>
 </body>
 </html>
