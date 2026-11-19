@@ -1579,12 +1579,20 @@ def confirm_livestock_receipt(listing_id):
                 WHERE user_id = %s
             """, (winning_amount, buyer_id))
 
-        # 2. Credit farmer wallet
-        cursor.execute("""
-            UPDATE wallets
-            SET wallet_balance = COALESCE(wallet_balance, 0) + %s
-            WHERE user_id = %s
-        """, (winning_amount, farmer_id))
+       # 2. Credit farmer wallet (insert row if missing)
+        cursor.execute("SELECT wallet_balance FROM wallets WHERE user_id = %s", (farmer_id,))
+        farmer_wallet = cursor.fetchone()
+        if farmer_wallet:
+            cursor.execute("""
+                UPDATE wallets
+                SET wallet_balance = COALESCE(wallet_balance, 0) + %s
+                WHERE user_id = %s
+            """, (winning_amount, farmer_id))
+        else:
+            cursor.execute("""
+                INSERT INTO wallets (user_id, wallet_balance)
+                VALUES (%s, %s)
+            """, (farmer_id, winning_amount))
 
         # 3. Mark listing status as completed
         cursor.execute("UPDATE livestock_listings SET auction_status = 'completed' WHERE listing_id = %s", (listing_id,))
