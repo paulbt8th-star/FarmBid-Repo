@@ -269,13 +269,14 @@ def settle_won_auctions_for_buyer(cursor, buyer_id):
         ref_code = f"AUC-{int(listing_id):03d}"
         desc = f"Winning bid deduction: {win.get('animal_type') or 'Livestock'} ({ref_code})"
 
+        # Skip if already deducted/settled for this listing
         cursor.execute("""
             SELECT 1 FROM wallet_transactions
             WHERE user_id = %s
               AND LOWER(COALESCE(type, '')) IN ('debit', 'payment', 'bid_deduction')
-              AND (reference_code = %s OR description LIKE %s)
+              AND description LIKE %s
             LIMIT 1
-        """, (buyer_id, ref_code, f"%({ref_code})%"))
+        """, (buyer_id, f"%({ref_code})%"))
         if cursor.fetchone():
             continue
 
@@ -287,9 +288,9 @@ def settle_won_auctions_for_buyer(cursor, buyer_id):
 
         try:
             cursor.execute("""
-                INSERT INTO wallet_transactions (user_id, reference_code, description, amount, type, status)
-                VALUES (%s, %s, %s, %s, 'debit', 'Completed')
-            """, (buyer_id, ref_code, desc, amount))
+                INSERT INTO wallet_transactions (user_id, description, amount, type, created_at)
+                VALUES (%s, %s, %s, 'debit', NOW())
+            """, (buyer_id, desc, amount))
         except Exception:
             cursor.execute("""
                 INSERT INTO wallet_transactions (user_id, amount, type, created_at)
