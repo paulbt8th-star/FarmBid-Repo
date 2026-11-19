@@ -93,7 +93,7 @@
       <div class="page-header-row">
         <div>
           <h1 class="page-title">Earnings</h1>
-          <p class="page-subtitle">Monitor your profit, track settlements and withdraw your available earnings via GCash.</p>
+          <p class="page-subtitle">Monitor your profit, track settlements and withdraw your available earnings.</p>
         </div>
         <div class="date-pill">
           <span id="currentDateDisplay">Nov 1, 2026</span>
@@ -108,12 +108,11 @@
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
               <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Available to withdraw</span>
-              <span class="badge badge-green">Ready via GCash</span>
             </div>
             <div id="walletBalanceDisplay" style="font-size: 2.2rem; font-weight: 700; color: var(--brand-dark-green); letter-spacing: -0.02em; margin-bottom: 4px;">₱0.00</div>
-            <div style="font-size: 0.8rem; color: var(--text-secondary);">GCash Instant Payout Balance</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Payout Balance</div>
           </div>
-          <button id="openWithdrawModalBtn" class="btn btn-dark-green" style="padding: 12px 24px; background-color: var(--brand-dark-green); cursor: pointer;">Withdraw via GCash</button>
+          <button id="openWithdrawModalBtn" class="btn btn-dark-green" style="padding: 12px 24px; background-color: var(--brand-dark-green); cursor: pointer;">Withdraw</button>
         </div>
 
         <!-- Pending Settlement Box (With Explicit IDs Added) -->
@@ -133,7 +132,7 @@
         <div class="dash-card-header">
           <div>
             <h2 class="dash-card-title">Withdrawal history</h2>
-            <p class="dash-card-subtitle">Track transfers from your FarmBid wallet to your GCash account.</p>
+            <p class="dash-card-subtitle">Track transfers from your FarmBid wallet to your account.</p>
           </div>
           <a href="#" style="font-size: 0.8rem; font-weight: 600;">Export history &downarrow;</a>
         </div>
@@ -144,7 +143,7 @@
               <tr>
                 <th>Reference</th>
                 <th>Requested On</th>
-                <th>GCash Number</th>
+                <th>Number</th>
                 <th>Amount</th>
                 <th>Status</th>
                 <th style="text-align: right;">Received On</th>
@@ -168,8 +167,8 @@
   <!-- WITHDRAWAL MODAL -->
   <div id="withdrawModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
     <div style="background: #fff; padding: 32px; border-radius: 12px; width: 100%; max-width: 420px; box-shadow: var(--shadow-card);">
-      <h2 style="font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 4px;">Withdraw via GCash</h2>
-      <p style="font-size: 0.82rem; color: #666; margin-bottom: 20px;">Transfer funds securely to any GCash mobile wallet number.</p>
+      <h2 style="font-size: 1.25rem; font-weight: 700; color: #111; margin-bottom: 4px;">Withdraw</h2>
+      <p style="font-size: 0.82rem; color: #666; margin-bottom: 20px;">Transfer funds securely to a mobile wallet number.</p>
       
       <form id="withdrawForm">
         <div class="form-group" style="margin-bottom: 16px;">
