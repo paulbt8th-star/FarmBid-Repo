@@ -1126,44 +1126,62 @@ def create_dispute():
             return jsonify({'success': False, 'message': 'Missing required dispute details.'}), 400
 
         connection = get_db_connection()
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
 
-        # Ensure the live disputes table has all expected columns
+        # Ensure the live disputes table has all expected columns and safe defaults
         alter_statements = [
             "ALTER TABLE disputes ADD COLUMN report_code VARCHAR(50) NULL",
             "ALTER TABLE disputes ADD COLUMN listing_id INT NULL",
             "ALTER TABLE disputes ADD COLUMN reported_listing_id INT NULL",
             "ALTER TABLE disputes ADD COLUMN reason VARCHAR(255) NULL",
             "ALTER TABLE disputes ADD COLUMN description TEXT NULL",
-            "ALTER TABLE disputes ADD COLUMN status VARCHAR(50) DEFAULT 'open'"
+            "ALTER TABLE disputes ADD COLUMN status VARCHAR(50) DEFAULT 'open'",
+            "ALTER TABLE disputes MODIFY COLUMN reported_user_id INT NULL"
         ]
         for stmt in alter_statements:
             try:
                 cursor.execute(stmt)
                 connection.commit()
             except Exception:
-                connection.rollback()  # Ignore if column already exists
+                connection.rollback()
 
-        # Generate a unique report code (e.g., DSP-4821)
+        # Look up the reported user (farmer/seller of the listing) if listingId is provided
+        reported_user_id = data.get('reportedUserId')
+        if not reported_user_id and reported_listing_id:
+            try:
+                cursor.execute("SELECT * FROM livestock_listings WHERE listing_id = %s LIMIT 1", (reported_listing_id,))
+                listing = cursor.fetchone()
+                if listing:
+                    reported_user_id = (
+                        listing.get('farmer_id')
+                        or listing.get('seller_id')
+                        or listing.get('user_id')
+                        or listing.get('owner_id')
+                    )
+            except Exception:
+                pass
+
         import random
         report_code = f"DSP-{random.randint(1000, 9999)}"
 
+        write_cursor = connection.cursor()
         try:
             query = """
                 INSERT INTO disputes (
                     report_code, listing_id, reported_listing_id,
-                    reporter_id, issue_title, reporter_statement,
+                    reporter_id, reported_user_id, issue_title, reporter_statement,
                     priority, dispute_status, reason, description, status
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, 'normal', 'open', %s, %s, 'pending')
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'normal', 'open', %s, %s, 'pending')
             """
-            cursor.execute(
+            write_cursor.execute(
                 query,
                 (
                     report_code,
                     reported_listing_id,
                     reported_listing_id,
                     reporter_id,
+                    reported_user_id,
                     reason,
                     description,
                     reason,
@@ -1173,12 +1191,18 @@ def create_dispute():
         except Exception:
             connection.rollback()
             query = """
-                INSERT INTO disputes (report_code, reporter_id, listing_id, reason, description, status)
-                VALUES (%s, %s, %s, %s, %s, 'pending')
+                INSERT INTO disputes (
+                    report_code, reporter_id, reported_user_id, listing_id, reason, description, status
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'pending')
             """
-            cursor.execute(query, (report_code, reporter_id, reported_listing_id, reason, description))
+            write_cursor.execute(
+                query,
+                (report_code, reporter_id, reported_user_id, reported_listing_id, reason, description)
+            )
 
         connection.commit()
+        write_cursor.close()
 
         return jsonify({
             'success': True,
