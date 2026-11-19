@@ -237,27 +237,27 @@ def get_bids_by_listing(listing_id):
         
 def settle_won_auctions_for_buyer(cursor, buyer_id):
     """Deducts winning bid amounts once from wallets.wallet_balance for ended auctions won by buyer_id."""
+    # Skip if an identical debit/payment transaction already exists for this buyer and amount
     cursor.execute("""
-        SELECT
-            l.listing_id,
-            l.animal_type,
-            MAX(b.bid_amount) AS winning_bid
-        FROM bids b
-        JOIN livestock_listings l ON b.listing_id = l.listing_id
-        WHERE b.bidder_id = %s
-          AND (
-              LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'settlement', 'completed')
-              OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
-          )
-          AND b.bid_amount >= COALESCE(l.current_highest_bid, 0)
-          AND NOT EXISTS (
-              SELECT 1
-              FROM bids b2
-              WHERE b2.listing_id = l.listing_id
-                AND b2.bid_amount > b.bid_amount
-          )
-        GROUP BY l.listing_id, l.animal_type
-    """, (buyer_id,))
+            SELECT 1 FROM wallet_transactions
+            WHERE user_id = %s
+              AND LOWER(COALESCE(type, '')) IN ('debit', 'payment', 'bid_deduction')
+              AND amount = %s
+            LIMIT 1
+        """, (buyer_id, amount))
+    if cursor.fetchone():
+            continue
+
+    cursor.execute("""
+            UPDATE wallets
+            SET wallet_balance = GREATEST(0, COALESCE(wallet_balance, 0) - %s)
+            WHERE user_id = %s
+        """, (amount, buyer_id))
+
+    cursor.execute("""
+            INSERT INTO wallet_transactions (user_id, amount, type, created_at)
+            VALUES (%s, %s, 'debit', NOW())
+        """, (buyer_id, amount))
     won_listings = cursor.fetchall() or []
 
     for win in won_listings:
