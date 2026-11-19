@@ -227,7 +227,7 @@
         <div>
           <!-- Auction Ended Info Banner -->
           <div id="auctionEndedBanner" style="display: none; background: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; margin-bottom: 16px; text-align: center;">
-            🔒 This auction has ended. Bidding is now closed.
+           This auction has ended. Bidding is now closed.
           </div>
 
           <!-- Live Bidding Widget Card -->
@@ -292,9 +292,9 @@
             <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 8px;">Payment & delivery</h3>
             <div
               style="font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px;">
-              <div>🔒 <strong>Pay securely through FarmBid</strong><br>If you win, settle within 24 hours. Payment is
+              <div><strong>Pay securely through FarmBid</strong><br>If you win, settle within 24 hours. Payment is
                 held until you confirm receipt.</div>
-              <div>🚚 <strong>Farm pickup or arranged delivery</strong><br>Coordinate with the farmer after payment.
+              <div><strong>Farm pickup or arranged delivery</strong><br>Coordinate with the farmer after payment.
                 Transport costs are agreed separately; not included in your bid.</div>
             </div>
           </div>
@@ -553,7 +553,7 @@
         descEl.style.color = 'var(--text-secondary)';
         descEl.style.fontStyle = 'normal';
       } else {
-        descEl.textContent = 'ℹ️ No additional description provided by the farmer for this livestock record.';
+        descEl.textContent = 'No additional description provided by the farmer for this livestock record.';
         descEl.style.color = '#777';
         descEl.style.fontStyle = 'italic';
       }
@@ -634,7 +634,7 @@
       const bidHistoryList = document.getElementById('bidHistoryList');
       if (bidHistoryList) {
         if (bids.length === 0) {
-          bidHistoryList.innerHTML = `<div style="padding: 10px; color: #777; font-style: italic; text-align: center;">ℹ️ No bids placed yet for this auction.</div>`;
+          bidHistoryList.innerHTML = `<div style="padding: 10px; color: #777; font-style: italic; text-align: center;">No bids placed yet for this auction.</div>`;
         } else {
           bidHistoryList.innerHTML = bids.map(b => {
             const isMe = String(b.bidder_id) === String(currentUserId);
