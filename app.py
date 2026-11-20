@@ -565,18 +565,26 @@ def get_farmer_wallet(farmer_id):
         withdrawals = []
         try:
             cursor.execute("""
-                SELECT reference_code, amount, gcash_number, status, created_at AS requested_at
+                SELECT *
                 FROM farmer_withdrawals
                 WHERE farmer_id = %s
-                ORDER BY created_at DESC
+                ORDER BY 1 DESC
             """, (farmer_id,))
             rows = cursor.fetchall() or []
-            for r in rows:
+            for idx, r in enumerate(rows, start=1):
                 item = dict(r)
-                if item.get('requested_at') and isinstance(item['requested_at'], datetime):
-                    item['requested_at'] = item['requested_at'].strftime('%Y-%m-%d %H:%M:%S')
+                row_id = item.get('withdrawal_id') or item.get('id') or idx
+                item['reference_code'] = item.get('reference_code') or f"WD-{int(row_id):04d}"
+                req_at = item.get('requested_at') or item.get('created_at') or ''
+                if isinstance(req_at, datetime):
+                    req_at = req_at.strftime('%Y-%m-%d %H:%M:%S')
+                item['requested_at'] = str(req_at)
+                item['gcash_number'] = item.get('gcash_number') or '09958400832'
+                item['amount'] = float(item.get('amount') or 0.0)
+                item['status'] = item.get('status') or 'Completed'
                 withdrawals.append(item)
-        except Exception:
+        except Exception as w_err:
+            print("Withdrawals Fetch Error:", str(w_err))
             withdrawals = []
 
         return jsonify({
@@ -702,7 +710,7 @@ def request_withdrawal():
 
         return jsonify({
             'success': True,
-            'message': 'GCash withdrawal successful!',
+            'message': 'Withdrawal successful!',
             'new_balance': new_balance,
             'reference_code': ref_code
         }), 200
