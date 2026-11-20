@@ -111,8 +111,8 @@
             <div id="auctionTimer" style="font-size: 1.3rem; font-weight: 700; color: #1e5631; margin-bottom: 4px;">00h : 00m : 00s</div>
             <div id="closesDateSub" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 16px;">Closes · --</div>
 
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #166534;">
-              You are viewing this auction in <strong>Admin Oversight Mode</strong>.
+            <div style="padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 0.8rem; color: #1e40af; text-align: center;">
+            You are viewing this auction in Admin Oversight Mode.
             </div>
           </div>
 
@@ -147,6 +147,26 @@
       return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0);
     }
 
+    function applyAdminAuctionStatusUI(statusValue, isExpired) {
+      const badge = document.getElementById('leadingBadge') || document.querySelector('.badge');
+      if (!badge) return;
+
+      const normStatus = String(statusValue || 'live').toLowerCase();
+      const isClosed = ['ended', 'closed', 'completed'].includes(normStatus) || Boolean(isExpired);
+
+      if (isClosed) {
+        badge.textContent = 'Ended';
+        badge.className = 'badge';
+        badge.style.backgroundColor = '#fee2e2';
+        badge.style.color = '#991b1b';
+      } else {
+        badge.textContent = 'Live auction';
+        badge.className = 'badge badge-green';
+        badge.style.backgroundColor = '';
+        badge.style.color = '';
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       const user = JSON.parse(localStorage.getItem('farmbid_user') || localStorage.getItem('user') || localStorage.getItem('currentUser'));
       if (!user || user.role !== 'admin') {
@@ -163,12 +183,12 @@
       }
 
       try {
-          const [listingRes, bidsRes] = await Promise.all([
-              fetch('/api/listings'),
-              fetch(`/api/bids/listing/${listingId}`)
-          ]);
+        const [listingRes, bidsRes] = await Promise.all([
+          fetch('/api/listings'),
+          fetch(`/api/bids/listing/${listingId}`)
+        ]);
 
-          const listingResult = await listingRes.json();
+        const listingResult = await listingRes.json();
         const bidsResult = await bidsRes.json();
 
         if (!listingRes.ok || !listingResult.success) {
@@ -225,7 +245,7 @@
         const docsContainer = document.getElementById('documentsContainer');
         let docs = item.documents || [];
         if (typeof docs === 'string') {
-          try { docs = JSON.parse(docs); } catch(e) { docs = [docs]; }
+          try { docs = JSON.parse(docs); } catch (e) { docs = [docs]; }
         }
 
         if (!Array.isArray(docs) || docs.length === 0) {
@@ -268,17 +288,21 @@
           }
         }
 
-        // Countdown Timer
+        // Countdown Timer & Status Badge
         const rawEndsAt = item.auction_ends_at;
-        const endsAtTimestamp = rawEndsAt ? parseLocalDate(rawEndsAt).getTime() : 0;
+        const endsAtDate = rawEndsAt ? parseLocalDate(rawEndsAt) : null;
+        const endsAtTimestamp = endsAtDate ? endsAtDate.getTime() : 0;
         const timerDisplay = document.getElementById('auctionTimer');
         const closesSubEl = document.getElementById('closesDateSub');
-        if (closesSubEl && rawEndsAt) {
-          closesSubEl.textContent = `Closes · ${parseLocalDate(rawEndsAt).toLocaleString()}`;
+        if (closesSubEl) {
+          closesSubEl.textContent = endsAtDate ? `Closes · ${endsAtDate.toLocaleString()}` : 'No end time';
         }
 
-        setInterval(() => {
+        const updateTimerAndStatus = () => {
           const distance = endsAtTimestamp > 0 ? endsAtTimestamp - Date.now() : 0;
+          const isExpired = endsAtTimestamp > 0 && distance <= 0;
+          applyAdminAuctionStatusUI(item.auction_status, isExpired);
+
           if (distance <= 0) {
             if (timerDisplay) timerDisplay.textContent = '00h : 00m : 00s (Closed)';
           } else {
@@ -287,8 +311,10 @@
             const s = Math.floor((distance % (1000 * 60)) / 1000);
             if (timerDisplay) timerDisplay.textContent = `${String(h).padStart(2, '0')}h : ${String(m).padStart(2, '0')}m : ${String(s).padStart(2, '0')}s`;
           }
-        }, 1000);
+        };
 
+        updateTimerAndStatus();
+        setInterval(updateTimerAndStatus, 1000);
       } catch (err) {
         console.error('Error loading admin auction details:', err);
       }
@@ -315,6 +341,6 @@
         }
       });
     };
-  </script>
+</script>
 </body>
 </html>
