@@ -149,15 +149,14 @@
     const leadingBadge = document.getElementById('leadingBadge');
     const normStatus = String(statusValue || 'live').toLowerCase();
 
-    const isCompleted = normStatus === 'completed';
-    const isClosed = isCompleted || ['ended', 'closed'].includes(normStatus) || Boolean(isExpired);
+    const isClosed = ['ended', 'closed', 'completed'].includes(normStatus) || Boolean(isExpired);
 
-    const label = isCompleted ? 'Completed' : (isClosed ? 'Auction Ended' : 'Live auction');
-    const cardLabel = isCompleted ? 'Completed' : (isClosed ? 'Auction Ended' : 'Active Auction');
+    const topLabel = isClosed ? 'Ended' : 'Live auction';
+    const cardLabel = isClosed ? 'Ended' : 'Active Auction';
 
     [topBadge, leadingBadge].forEach((el, idx) => {
       if (!el) return;
-      el.textContent = idx === 0 ? label : cardLabel;
+      el.textContent = idx === 0 ? topLabel : cardLabel;
       if (isClosed) {
         el.className = 'badge';
         el.style.backgroundColor = '#fee2e2';
