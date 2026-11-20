@@ -57,7 +57,6 @@
         <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px;">Manage Auctions / <span id="breadcrumbAucCode">AUC-000</span></div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h1 id="listingTitle" style="font-size: 1.5rem; font-weight: 700; color: #111;">Loading auction...</h1>
-          <span id="topStatusBadge" class="badge badge-green" style="font-size: 0.8rem;">Live auction</span>
         </div>
         <div id="listingSubtitle" style="font-size: 0.85rem; color: var(--text-secondary);">Loading details...</div>
       </div>
@@ -145,30 +144,22 @@
   }
 
   function applyAuctionStatusUI(statusValue, isExpired) {
-    const topBadge = document.getElementById('topStatusBadge');
     const leadingBadge = document.getElementById('leadingBadge');
-    const normStatus = String(statusValue || 'live').toLowerCase();
+    if (!leadingBadge) return;
 
+    const normStatus = String(statusValue || 'live').toLowerCase();
     const isClosed = ['ended', 'closed', 'completed'].includes(normStatus) || Boolean(isExpired);
 
-    const topLabel = isClosed ? 'Ended' : 'Live auction';
-    const cardLabel = isClosed ? 'Ended' : 'Active Auction';
-
-    [topBadge, leadingBadge].forEach((el, idx) => {
-      if (!el) return;
-      el.textContent = idx === 0 ? topLabel : cardLabel;
-      if (isClosed) {
-        el.className = 'badge';
-        el.style.backgroundColor = '#fee2e2';
-        el.style.color = '#991b1b';
-        el.style.fontSize = idx === 0 ? '0.8rem' : '';
-      } else {
-        el.className = 'badge badge-green';
-        el.style.backgroundColor = '';
-        el.style.color = '';
-        el.style.fontSize = idx === 0 ? '0.8rem' : '';
-      }
-    });
+    leadingBadge.textContent = isClosed ? 'Ended' : 'Active Auction';
+    if (isClosed) {
+      leadingBadge.className = 'badge';
+      leadingBadge.style.backgroundColor = '#fee2e2';
+      leadingBadge.style.color = '#991b1b';
+    } else {
+      leadingBadge.className = 'badge badge-green';
+      leadingBadge.style.backgroundColor = '';
+      leadingBadge.style.color = '';
+    }
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
