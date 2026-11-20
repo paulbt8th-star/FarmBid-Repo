@@ -609,64 +609,81 @@ def request_withdrawal():
     connection = None
     cursor = None
     try:
-        data = request.get_json()
-        farmer_id = data.get('farmerId')
-        amount = float(data.get('amount', 0))
-        gcash_number = data.get('gcashNumber')
-        
+        data = request.get_json() or {}
+        farmer_id = data.get('farmerId') or data.get('farmer_id') or data.get('userId') or data.get('user_id')
+        raw_amount = data.get('amount', 0)
+        gcash_number = (data.get('gcashNumber') or data.get('gcash_number') or '').strip()
+
+        try:
+            amount = float(str(raw_amount).replace(',', '').strip())
+        except (ValueError, TypeError):
+            amount = 0.0
+
+        if not farmer_id or amount <= 0 or not gcash_number:
+            return jsonify({'success': False, 'message': 'Invalid withdrawal amount or insufficient balance.'}), 400
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        cursor.execute("SELECT wallet_balance FROM users WHERE user_id = %s", (farmer_id,))
-        user = cursor.fetchone()
-        current_balance = float(user.get('wallet_balance', 0))
-        
-        if amount <= 0 or amount > current_balance:
-            return jsonify({'success': False, 'message': 'Invalid withdrawal amount or insufficient balance.'}), 400
-            
-        new_balance = current_balance - amount
+
+        cursor.execute("SELECT * FROM wallets WHERE user_id = %s LIMIT 1", (farmer_id,))
+        wallet = cursor.fetchone()
+
+        raw_bal = None
+        if wallet:
+            raw_bal = wallet.get('wallet_balance')
+            if raw_bal is None:
+                raw_bal = wallet.get('balance')
+        current_balance = float(raw_bal or 0.0)
+
+        if amount > current_balance + 1e-6:
+            return jsonify({
+                'success': False,
+                'message': f'Invalid withdrawal amount or insufficient balance. Available: ₱{current_balance:,.2f}'
+            }), 400
+
+        new_balance = max(0.0, round(current_balance - amount, 2))
         ref_code = f"WD-{os.urandom(2).hex().upper()}"
-        
-        cursor.execute("UPDATE users SET wallet_balance = %s, gcash_number = %s WHERE user_id = %s", (new_balance, gcash_number, farmer_id))
-        cursor.execute("""
-            INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status)
-            VALUES (%s, %s, %s, %s, 'Completed')
-        """, (farmer_id, ref_code, amount, gcash_number))
-        
+
+        try:
+            cursor.execute("UPDATE wallets SET wallet_balance = %s WHERE user_id = %s", (new_balance, farmer_id))
+        except Exception:
+            cursor.execute("UPDATE wallets SET balance = %s WHERE user_id = %s", (new_balance, farmer_id))
+
+        try:
+            cursor.execute("UPDATE users SET gcash_number = %s WHERE user_id = %s", (gcash_number, farmer_id))
+        except Exception:
+            pass
+
+        try:
+            cursor.execute("""
+                INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status, created_at)
+                VALUES (%s, %s, %s, %s, 'Completed', NOW())
+            """, (farmer_id, ref_code, amount, gcash_number))
+        except Exception:
+            cursor.execute("""
+                INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status)
+                VALUES (%s, %s, %s, %s, 'Completed')
+            """, (farmer_id, ref_code, amount, gcash_number))
+
         connection.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'GCash withdrawal successful!',
-            'new_balance': new_balance
+            'new_balance': new_balance,
+            'reference_code': ref_code
         }), 200
 
     except Exception as e:
-        if connection: connection.rollback()
+        if connection:
+            connection.rollback()
+        print("Withdrawal Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
-
-def sync_expired_auctions(cursor, farmer_id=None):
-    """Marks live/active listings as 'ended' once their auction_ends_at timestamp has passed."""
-    if farmer_id is not None:
-        cursor.execute("""
-            UPDATE livestock_listings
-            SET auction_status = 'ended'
-            WHERE farmer_id = %s
-              AND LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
-              AND auction_ends_at IS NOT NULL
-              AND auction_ends_at <= NOW()
-        """, (farmer_id,))
-    else:
-        cursor.execute("""
-            UPDATE livestock_listings
-            SET auction_status = 'ended'
-            WHERE LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
-              AND auction_ends_at IS NOT NULL
-              AND auction_ends_at <= NOW()
-        """)
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
