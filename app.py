@@ -654,16 +654,49 @@ def request_withdrawal():
         except Exception:
             pass
 
-        try:
-            cursor.execute("""
-                INSERT INTO farmer_withdrawals (farmer_id, amount, gcash_number, status, created_at)
-                VALUES (%s, %s, %s, 'Completed', NOW())
-            """, (farmer_id, amount, gcash_number))
-        except Exception:
-            cursor.execute("""
-                INSERT INTO farmer_withdrawals (farmer_id, amount, gcash_number, status)
-                VALUES (%s, %s, %s, 'Completed')
-            """, (farmer_id, amount, gcash_number))
+        inserted = False
+        insert_attempts = [
+            (
+                """
+                INSERT INTO farmer_withdrawals (farmer_id, amount, status, created_at)
+                VALUES (%s, %s, 'Completed', NOW())
+                """,
+                (farmer_id, amount)
+            ),
+            (
+                """
+                INSERT INTO farmer_withdrawals (farmer_id, amount, status)
+                VALUES (%s, %s, 'Completed')
+                """,
+                (farmer_id, amount)
+            ),
+            (
+                """
+                INSERT INTO farmer_withdrawals (user_id, amount, status, created_at)
+                VALUES (%s, %s, 'Completed', NOW())
+                """,
+                (farmer_id, amount)
+            ),
+            (
+                """
+                INSERT INTO farmer_withdrawals (user_id, amount, status)
+                VALUES (%s, %s, 'Completed')
+                """,
+                (farmer_id, amount)
+            ),
+        ]
+
+        last_err = None
+        for sql_query, params in insert_attempts:
+            try:
+                cursor.execute(sql_query, params)
+                inserted = True
+                break
+            except Exception as exc:
+                last_err = exc
+
+        if not inserted and last_err:
+            raise last_err
 
         connection.commit()
 
