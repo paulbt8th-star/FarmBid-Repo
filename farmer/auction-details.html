@@ -158,12 +158,7 @@
     [topBadge, leadingBadge].forEach((el, idx) => {
       if (!el) return;
       el.textContent = idx === 0 ? label : cardLabel;
-      if (isCompleted) {
-        el.className = 'badge badge-green';
-        el.style.backgroundColor = '#dcfce7';
-        el.style.color = '#166534';
-        el.style.fontSize = idx === 0 ? '0.8rem' : '';
-      } else if (isClosed) {
+      if (isClosed) {
         el.className = 'badge';
         el.style.backgroundColor = '#fee2e2';
         el.style.color = '#991b1b';
