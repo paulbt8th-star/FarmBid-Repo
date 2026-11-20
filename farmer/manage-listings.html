@@ -327,10 +327,9 @@
       }).length;
 
       const endedCount = listings.filter(l => {
-        const endsAt = getEndsAtMs(l.auction_ends_at);
-        const rawStatus = String(l.auction_status || 'live').toLowerCase();
-        if (rawStatus === 'completed') return false;
-        return (endsAt && nowMs > endsAt) || ['ended', 'closed'].includes(rawStatus);
+      const endsAt = getEndsAtMs(l.auction_ends_at);
+      const rawStatus = String(l.auction_status || 'live').toLowerCase();
+      return (endsAt && nowMs > endsAt) || ['ended', 'closed', 'completed'].includes(rawStatus);
       }).length;
 
       const draftCount = listings.filter(l => ['draft', 'unlisted'].includes(String(l.auction_status || '').toLowerCase())).length;
