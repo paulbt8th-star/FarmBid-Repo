@@ -128,20 +128,53 @@
   let auctionPhotos = [];
   let currentPhotoIdx = 0;
 
-  // 🛡️ Helper to parse strings strictly as local device time (bypassing UTC conversion offsets)
+  // Helper to parse strings strictly as local device time (bypassing UTC conversion offsets)
   function parseLocalDate(dateString) {
     if (!dateString) return null;
     const cleanStr = String(dateString).trim().replace('T', ' ');
     const parts = cleanStr.split(' ');
     const datePart = parts[0];
     const timePart = parts[1] || '00:00:00';
-    
+
     if (!datePart) return null;
     const [year, month, day] = datePart.split('-').map(Number);
     const [hours, minutes, seconds] = timePart.split(':').map(Number);
-    
+
     if (!year || !month || !day) return null;
     return new Date(year, month - 1, day, hours || 0, minutes || 0, seconds || 0);
+  }
+
+  function applyAuctionStatusUI(statusValue, isExpired) {
+    const topBadge = document.getElementById('topStatusBadge');
+    const leadingBadge = document.getElementById('leadingBadge');
+    const normStatus = String(statusValue || 'live').toLowerCase();
+
+    const isCompleted = normStatus === 'completed';
+    const isClosed = isCompleted || ['ended', 'closed'].includes(normStatus) || Boolean(isExpired);
+
+    const label = isCompleted ? 'Completed' : (isClosed ? 'Auction Ended' : 'Live auction');
+    const cardLabel = isCompleted ? 'Completed' : (isClosed ? 'Auction Ended' : 'Active Auction');
+
+    [topBadge, leadingBadge].forEach((el, idx) => {
+      if (!el) return;
+      el.textContent = idx === 0 ? label : cardLabel;
+      if (isCompleted) {
+        el.className = 'badge badge-green';
+        el.style.backgroundColor = '#dcfce7';
+        el.style.color = '#166534';
+        el.style.fontSize = idx === 0 ? '0.8rem' : '';
+      } else if (isClosed) {
+        el.className = 'badge';
+        el.style.backgroundColor = '#fee2e2';
+        el.style.color = '#991b1b';
+        el.style.fontSize = idx === 0 ? '0.8rem' : '';
+      } else {
+        el.className = 'badge badge-green';
+        el.style.backgroundColor = '';
+        el.style.color = '';
+        el.style.fontSize = idx === 0 ? '0.8rem' : '';
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -174,9 +207,8 @@
         return;
       }
 
-      const bids = (bidsRes.ok && bidsResult.success) ? bidsResult.data : [];
-      
-      // Ensure auctionPhotos handles arrays and fallback properly
+      const bids = (bidsRes.ok && bidsResult.success && Array.isArray(bidsResult.data)) ? bidsResult.data : [];
+
       auctionPhotos = Array.isArray(item.images) && item.images.length > 0
         ? item.images
         : [item.image_url || 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55'];
@@ -224,7 +256,7 @@
       const docsContainer = document.getElementById('documentsContainer');
       let docs = item.documents || item.compliance_docs || [];
       if (typeof docs === 'string') {
-        try { docs = JSON.parse(docs); } catch(e) { docs = [docs]; }
+        try { docs = JSON.parse(docs); } catch (e) { docs = [docs]; }
       }
 
       if (!Array.isArray(docs) || docs.length === 0) {
@@ -246,14 +278,14 @@
         }).join('');
       }
 
-      // 4. Populate Main Photo Container & Carousel Support with Navigation Arrows
+      // Populate Main Photo Container & Carousel Support with Navigation Arrows
       const photoBox = document.getElementById('mainPhotoBox');
       if (photoBox) {
         photoBox.style.position = 'relative';
         photoBox.style.backgroundImage = `url('${auctionPhotos[0]}')`;
         photoBox.innerHTML = `
           <img id="nativeMainPhoto" src="${auctionPhotos[0]}" alt="${item.animal_type}" style="width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--radius-lg);">
-          
+
           <div id="nativePhotoCounter" style="position: absolute; top: 14px; right: 14px; background: rgba(0,0,0,0.65); color: #fff; font-size: 0.75rem; font-weight: 600; padding: 5px 12px; border-radius: 999px; z-index: 5;">
              1 / ${auctionPhotos.length} photos
           </div>
@@ -278,7 +310,7 @@
         }
       }
 
-      // Robust Local Date Parsing using parseLocalDate
+      // Timer & Status Badge Sync
       const rawEndsAt = item.auction_ends_at;
       let endsAtTimestamp = 0;
       let endsAtDate = null;
@@ -293,8 +325,12 @@
         closesSubEl.textContent = rawEndsAt && endsAtDate ? `Closes · ${endsAtDate.toLocaleString()}` : 'No end time';
       }
 
-      setInterval(() => {
+      const updateTimerAndStatus = () => {
         const distance = endsAtTimestamp > 0 ? endsAtTimestamp - Date.now() : 0;
+        const isExpired = endsAtTimestamp > 0 && distance <= 0;
+
+        applyAuctionStatusUI(item.auction_status, isExpired);
+
         if (distance <= 0) {
           if (timerDisplay) timerDisplay.textContent = '00h : 00m : 00s (Closed)';
         } else {
@@ -303,7 +339,10 @@
           const s = Math.floor((distance % (1000 * 60)) / 1000);
           if (timerDisplay) timerDisplay.textContent = `${String(h).padStart(2, '0')}h : ${String(m).padStart(2, '0')}m : ${String(s).padStart(2, '0')}s`;
         }
-      }, 1000);
+      };
+
+      updateTimerAndStatus();
+      setInterval(updateTimerAndStatus, 1000);
 
     } catch (err) {
       console.error('Error loading farmer auction details:', err);
@@ -322,7 +361,7 @@
     const mainImg = document.getElementById('nativeMainPhoto');
     const counter = document.getElementById('nativePhotoCounter');
     if (mainImg) mainImg.src = auctionPhotos[idx];
-    if (counter) counter.textContent = `📷 ${idx + 1} / ${auctionPhotos.length} photos`;
+    if (counter) counter.textContent = `${idx + 1} / ${auctionPhotos.length} photos`;
 
     auctionPhotos.forEach((_, i) => {
       const thumb = document.getElementById(`native-thumb-${i}`);
@@ -332,6 +371,6 @@
       }
     });
   };
-</script>
+  </script>
 </body>
 </html>
