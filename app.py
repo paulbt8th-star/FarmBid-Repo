@@ -656,14 +656,14 @@ def request_withdrawal():
 
         try:
             cursor.execute("""
-                INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status, created_at)
-                VALUES (%s, %s, %s, %s, 'Completed', NOW())
-            """, (farmer_id, ref_code, amount, gcash_number))
+                INSERT INTO farmer_withdrawals (farmer_id, amount, gcash_number, status, created_at)
+                VALUES (%s, %s, %s, 'Completed', NOW())
+            """, (farmer_id, amount, gcash_number))
         except Exception:
             cursor.execute("""
-                INSERT INTO farmer_withdrawals (farmer_id, reference_code, amount, gcash_number, status)
-                VALUES (%s, %s, %s, %s, 'Completed')
-            """, (farmer_id, ref_code, amount, gcash_number))
+                INSERT INTO farmer_withdrawals (farmer_id, amount, gcash_number, status)
+                VALUES (%s, %s, %s, 'Completed')
+            """, (farmer_id, amount, gcash_number))
 
         connection.commit()
 
@@ -684,6 +684,26 @@ def request_withdrawal():
             cursor.close()
         if connection:
             connection.close()
+
+def sync_expired_auctions(cursor, farmer_id=None):
+    """Marks live/active listings as 'ended' once their auction_ends_at timestamp has passed."""
+    if farmer_id is not None:
+        cursor.execute("""
+            UPDATE livestock_listings
+            SET auction_status = 'ended'
+            WHERE farmer_id = %s
+              AND LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
+              AND auction_ends_at IS NOT NULL
+              AND auction_ends_at <= NOW()
+        """, (farmer_id,))
+    else:
+        cursor.execute("""
+            UPDATE livestock_listings
+            SET auction_status = 'ended'
+            WHERE LOWER(COALESCE(auction_status, 'live')) IN ('live', 'active')
+              AND auction_ends_at IS NOT NULL
+              AND auction_ends_at <= NOW()
+        """)
 
 # 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
