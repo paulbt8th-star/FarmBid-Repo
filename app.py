@@ -1160,7 +1160,6 @@ def upload_livestock_images():
         print("Upload Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
 
-# 21. Get All Disputes (for Admin Dashboard & Dispute List)
 @app.route('/api/admin/disputes', methods=['GET'])
 def get_admin_disputes():
     connection = None
@@ -1168,29 +1167,67 @@ def get_admin_disputes():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
-        # Attempt to fetch all disputes safely
+
         try:
             cursor.execute("SELECT * FROM disputes ORDER BY created_at DESC")
             disputes = cursor.fetchall()
         except Exception:
-            # Fallback if table or columns differ
             cursor.execute("SELECT * FROM disputes")
             disputes = cursor.fetchall()
-        
-        # Ensure 'dispute_id' key exists for frontend rendering
+
+        # Preload listings and users for safe lookup across varying schemas
+        cursor.execute("""
+            SELECT l.*, u.first_name AS farmer_first, u.last_name AS farmer_last
+            FROM livestock_listings l
+            LEFT JOIN users u ON l.farmer_id = u.user_id
+        """)
+        listings_by_id = {str(r['listing_id']): r for r in (cursor.fetchall() or [])}
+
+        cursor.execute("SELECT user_id, first_name, last_name, role FROM users")
+        users_by_id = {str(r['user_id']): r for r in (cursor.fetchall() or [])}
+
         for d in disputes:
             if 'id' in d and 'dispute_id' not in d:
                 d['dispute_id'] = d['id']
-                
+
+            lid = d.get('listing_id') or d.get('reported_listing_id')
+            d['listing_id'] = lid
+            listing = listings_by_id.get(str(lid)) if lid is not None else None
+
+            if listing:
+                farmer_full = f"{listing.get('farmer_first') or ''} {listing.get('farmer_last') or ''}".strip()
+                d['livestock_summary'] = f"{listing.get('animal_type') or 'Livestock'}" + (
+                    f" ({listing.get('breed')})" if listing.get('breed') else ""
+                )
+                d['livestock_code'] = f"AUC-{int(lid):03d}"
+                d['reported_farmer_name'] = farmer_full or (f"User #{listing.get('farmer_id')}" if listing.get('farmer_id') else 'N/A')
+            else:
+                d['livestock_summary'] = 'Not linked'
+                d['livestock_code'] = f"AUC-{int(lid):03d}" if lid else '—'
+                rep_user = users_by_id.get(str(d.get('reported_user_id')))
+                d['reported_farmer_name'] = (
+                    f"{rep_user.get('first_name') or ''} {rep_user.get('last_name') or ''}".strip()
+                    if rep_user else (f"User #{d.get('reported_user_id')}" if d.get('reported_user_id') else 'N/A')
+                )
+
+            reporter = users_by_id.get(str(d.get('reporter_id')))
+            d['reporter_name'] = (
+                f"{reporter.get('first_name') or ''} {reporter.get('last_name') or ''}".strip()
+                if reporter else f"User #{d.get('reporter_id') or '?'}"
+            )
+
+            if d.get('created_at') and isinstance(d['created_at'], datetime):
+                d['created_at'] = d['created_at'].strftime('%Y-%m-%d %H:%M')
+
         return jsonify({'success': True, 'data': disputes}), 200
     except Exception as e:
         print("Disputes Fetch Error:", str(e))
-        # Return empty data gracefully instead of 500 to keep UI functional
         return jsonify({'success': True, 'data': []}), 200
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 22. Create New Dispute Report
 @app.route('/api/disputes', methods=['POST'])

@@ -127,17 +127,18 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Report ID</th>
-                <th>Reporter</th>
-                <th>Reason</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th style="text-align: right;">Actions</th>
+                <th>REPORT ID</th>
+                <th>REPORTER</th>
+                <th>LIVESTOCK ID</th>
+                <th>REASON</th>
+                <th>DESCRIPTION</th>
+                <th>STATUS</th>
+                <th style="text-align: right;">ACTIONS</th>
               </tr>
             </thead>
             <tbody id="disputesTableBody">
               <tr>
-                <td colspan="6" style="text-align: center; padding: 32px; color: #777; font-style: italic;">Loading dispute records...</td>
+                <td colspan="7" style="text-align: center; padding: 32px; color: #777; font-style: italic;">Loading dispute records...</td>
               </tr>
             </tbody>
           </table>
@@ -268,12 +269,34 @@
             badgeColor = '#991b1b';
           }
 
+          const listingId = d.listing_id || d.reported_listing_id || '';
+          const livestockCode = d.livestock_code || (listingId ? `AUC-${String(listingId).padStart(3, '0')}` : '—');
+          const livestockSummary = d.livestock_summary || '';
+          const sellerInfo = d.reported_farmer_name || (d.reported_user_id ? `User #${d.reported_user_id}` : '');
+          const submittedAt = d.created_at ? `<div style="font-size: 0.7rem; color: #888; margin-top: 2px;">${d.created_at}</div>` : '';
+
+          const livestockHtml = listingId
+            ? `
+              <div>
+                <a href="auction-details.html?id=${listingId}" style="font-weight: 700; color: #1e5631; text-decoration: none;">
+                  ${livestockCode}
+                </a>
+                ${livestockSummary ? `<div style="font-size: 0.75rem; color: #444;">${livestockSummary}</div>` : ''}
+                ${sellerInfo ? `<div style="font-size: 0.72rem; color: #777;">Farmer: ${sellerInfo}</div>` : ''}
+              </div>
+            `
+            : `<span style="color: #888;">—</span>`;
+
           return `
             <tr>
               <td style="font-weight: 700;">#${d.dispute_id}</td>
-              <td>${d.reporter_name || 'User #' + d.reporter_id}</td>
-              <td style="font-weight: 600;">${d.reason}</td>
-              <td style="color: #555; max-width: 300px; white-space: normal;">${d.description}</td>
+              <td>
+                <div>${d.reporter_name || 'User #' + d.reporter_id}</div>
+                ${submittedAt}
+              </td>
+              <td>${livestockHtml}</td>
+              <td style="font-weight: 600;">${d.reason || ''}</td>
+              <td style="color: #555; max-width: 300px; white-space: normal;">${d.description || ''}</td>
               <td>
                 <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">
                   ${status}
