@@ -2066,7 +2066,6 @@ def create_listing():
         age = data.get('age')
         weight = data.get('weight')
         starting_price = data.get('startingPrice') or data.get('starting_price')
-        description = (data.get('description') or '').strip()
         auction_ends_at = (
             data.get('auctionEndsAt')
             or data.get('auction_ends_at')
@@ -2127,30 +2126,41 @@ def create_listing():
                 """
                 INSERT INTO livestock_listings (
                     farmer_id, animal_type, breed, gender, age, weight,
-                    starting_price, current_highest_bid, description,
-                    image_url, documents, auction_status, auction_ends_at, created_at
+                    starting_price, current_highest_bid, image_url, documents,
+                    auction_status, auction_ends_at, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, %s, 'live', %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, 'live', %s, NOW())
                 """,
                 (
                     farmer_id, animal_type, breed, gender, age, weight_val,
-                    starting_price_val, description, primary_image or images_json,
-                    docs_json, auction_ends_at
+                    starting_price_val, primary_image or images_json, docs_json,
+                    auction_ends_at
                 )
             ),
             (
                 """
                 INSERT INTO livestock_listings (
                     farmer_id, animal_type, breed, weight,
-                    starting_price, description, image_url,
-                    auction_status, auction_ends_at, created_at
+                    starting_price, image_url, auction_status, auction_ends_at, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, 'live', %s, NOW())
                 """,
                 (
                     farmer_id, animal_type, breed, weight_val,
-                    starting_price_val, description, primary_image or images_json,
-                    auction_ends_at
+                    starting_price_val, primary_image or images_json, auction_ends_at
+                )
+            ),
+            (
+                """
+                INSERT INTO livestock_listings (
+                    farmer_id, animal_type, breed, weight,
+                    starting_price, image_url, auction_status, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'live', NOW())
+                """,
+                (
+                    farmer_id, animal_type, breed, weight_val,
+                    starting_price_val, primary_image or images_json
                 )
             ),
         ]
