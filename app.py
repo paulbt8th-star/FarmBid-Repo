@@ -2064,6 +2064,11 @@ def create_listing():
         breed = (data.get('breed') or '').strip()
         gender = (data.get('gender') or data.get('sex') or '').strip()
         age = data.get('age')
+        if age is None or str(age).strip() == '':
+            age_val = '0'
+        else:
+            age_val = str(age).strip()
+
         weight = data.get('weight')
         starting_price = data.get('startingPrice') or data.get('starting_price')
         auction_ends_at = (
@@ -2072,11 +2077,6 @@ def create_listing():
             or data.get('closingDateTime')
             or data.get('closing_datetime')
         )
-
-        if age is None or str(age).strip() == '':
-            age_val = '0'
-        else:
-            age_val = str(age).strip()
 
         raw_images = data.get('images')
         if raw_images is None:
@@ -2126,6 +2126,12 @@ def create_listing():
         docs_json = json.dumps(clean_docs)
         primary_image = clean_images[0] if clean_images else None
 
+        try:
+            cursor.execute("ALTER TABLE livestock_listings ADD COLUMN documents TEXT NULL")
+            connection.commit()
+        except Exception:
+            connection.rollback()
+
         insert_attempts = [
             (
                 """
@@ -2146,26 +2152,27 @@ def create_listing():
                 """
                 INSERT INTO livestock_listings (
                     farmer_id, animal_type, breed, age, weight,
-                    starting_price, image_url, auction_status, auction_ends_at, created_at
+                    starting_price, image_url, documents, auction_status, auction_ends_at, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'live', %s, NOW())
                 """,
                 (
                     farmer_id, animal_type, breed, age_val, weight_val,
-                    starting_price_val, primary_image or images_json, auction_ends_at
+                    starting_price_val, primary_image or images_json, docs_json,
+                    auction_ends_at
                 )
             ),
             (
                 """
                 INSERT INTO livestock_listings (
                     farmer_id, animal_type, breed, age, weight,
-                    starting_price, image_url, auction_status, created_at
+                    starting_price, image_url, documents, auction_status, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'live', NOW())
                 """,
                 (
                     farmer_id, animal_type, breed, age_val, weight_val,
-                    starting_price_val, primary_image or images_json
+                    starting_price_val, primary_image or images_json, docs_json
                 )
             ),
         ]

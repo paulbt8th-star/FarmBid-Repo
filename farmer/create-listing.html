@@ -345,8 +345,16 @@
           });
 
           const docUploadData = await docUploadRes.json();
-          if (docUploadRes.ok && docUploadData.success) {
+          if (docUploadRes.ok && docUploadData.success && Array.isArray(docUploadData.images) && docUploadData.images.length > 0) {
             uploadedDocUrls = docUploadData.images;
+          } else {
+            alert('Document upload failed: ' + (docUploadData.message || 'Could not upload compliance document.'));
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publish Listing to Marketplace';
+            }
+            isSubmitting = false;
+            return;
           }
         }
 
