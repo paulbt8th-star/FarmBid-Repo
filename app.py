@@ -1177,12 +1177,24 @@ def upload_livestock_images():
 
         for file in files:
             if file and file.filename != '':
-                upload_result = cloudinary.uploader.upload(
-                    file,
-                    folder="farmbid/livestock",
-                    resource_type="auto",
-                    access_mode="public"
-                )
+                filename_lower = (file.filename or '').lower()
+                res_type = "raw" if filename_lower.endswith(".pdf") else "auto"
+                file.stream.seek(0)
+                try:
+                    upload_result = cloudinary.uploader.upload(
+                        file,
+                        folder="farmbid/livestock",
+                        resource_type=res_type,
+                        access_mode="public"
+                    )
+                except Exception:
+                    file.stream.seek(0)
+                    upload_result = cloudinary.uploader.upload(
+                        file,
+                        folder="farmbid/livestock",
+                        resource_type="auto",
+                        access_mode="public"
+                    )
                 secure_url = upload_result.get('secure_url')
                 if secure_url:
                     saved_urls.append(secure_url)

@@ -348,6 +348,32 @@
           return;
         }
 
+        // 2. Upload compliance documents
+        if (selectedDocs.length > 0) {
+          const docFormData = new FormData();
+          selectedDocs.forEach(doc => {
+            docFormData.append('images', doc);
+          });
+
+          const docUploadRes = await fetch('/api/upload-livestock-images', {
+            method: 'POST',
+            body: docFormData
+          });
+
+          const docUploadData = await docUploadRes.json();
+          if (docUploadRes.ok && docUploadData.success && Array.isArray(docUploadData.images) && docUploadData.images.length > 0) {
+            uploadedDocUrls = docUploadData.images;
+          } else {
+            alert('Document upload failed: ' + (docUploadData.message || 'Could not upload compliance document.'));
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publish Listing to Marketplace';
+            }
+            isSubmitting = false;
+            return;
+          }
+        }
+
         // 3. Prevent browser/timezone offset conversion by splitting exact literal input components
         const rawDateTime = document.getElementById('auctionEndsAt').value; // e.g., "2026-11-05T06:00"
         let formattedEndsAt = null;
