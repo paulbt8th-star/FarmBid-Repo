@@ -2073,6 +2073,11 @@ def create_listing():
             or data.get('closing_datetime')
         )
 
+        if age is None or str(age).strip() == '':
+            age_val = '0'
+        else:
+            age_val = str(age).strip()
+
         raw_images = data.get('images')
         if raw_images is None:
             raw_images = data.get('imageUrls') or data.get('image_url') or []
@@ -2132,7 +2137,7 @@ def create_listing():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, 'live', %s, NOW())
                 """,
                 (
-                    farmer_id, animal_type, breed, gender, age, weight_val,
+                    farmer_id, animal_type, breed, gender, age_val, weight_val,
                     starting_price_val, primary_image or images_json, docs_json,
                     auction_ends_at
                 )
@@ -2140,26 +2145,26 @@ def create_listing():
             (
                 """
                 INSERT INTO livestock_listings (
-                    farmer_id, animal_type, breed, weight,
+                    farmer_id, animal_type, breed, age, weight,
                     starting_price, image_url, auction_status, auction_ends_at, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, 'live', %s, NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', %s, NOW())
                 """,
                 (
-                    farmer_id, animal_type, breed, weight_val,
+                    farmer_id, animal_type, breed, age_val, weight_val,
                     starting_price_val, primary_image or images_json, auction_ends_at
                 )
             ),
             (
                 """
                 INSERT INTO livestock_listings (
-                    farmer_id, animal_type, breed, weight,
+                    farmer_id, animal_type, breed, age, weight,
                     starting_price, image_url, auction_status, created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, 'live', NOW())
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', NOW())
                 """,
                 (
-                    farmer_id, animal_type, breed, weight_val,
+                    farmer_id, animal_type, breed, age_val, weight_val,
                     starting_price_val, primary_image or images_json
                 )
             ),
