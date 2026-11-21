@@ -1288,19 +1288,28 @@ def create_dispute():
         reason = data.get('reason')
         description = data.get('description')
 
+        raw_proofs = data.get('proofImages') or data.get('proof_images') or []
+        if isinstance(raw_proofs, str):
+            try:
+                raw_proofs = json.loads(raw_proofs) if raw_proofs.startswith('[') else [raw_proofs]
+            except Exception:
+                raw_proofs = [raw_proofs]
+        clean_proofs = [str(u).strip() for u in (raw_proofs or []) if u and str(u).strip()]
+        proofs_json = json.dumps(clean_proofs) if clean_proofs else None
+
         if not reporter_id or not reason or not description:
             return jsonify({'success': False, 'message': 'Missing required dispute details.'}), 400
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Ensure the live disputes table has all expected columns and safe defaults
         alter_statements = [
             "ALTER TABLE disputes ADD COLUMN report_code VARCHAR(50) NULL",
             "ALTER TABLE disputes ADD COLUMN listing_id INT NULL",
             "ALTER TABLE disputes ADD COLUMN reported_listing_id INT NULL",
             "ALTER TABLE disputes ADD COLUMN reason VARCHAR(255) NULL",
             "ALTER TABLE disputes ADD COLUMN description TEXT NULL",
+            "ALTER TABLE disputes ADD COLUMN proof_images TEXT NULL",
             "ALTER TABLE disputes ADD COLUMN status VARCHAR(50) DEFAULT 'open'",
             "ALTER TABLE disputes MODIFY COLUMN reported_user_id INT NULL"
         ]
@@ -1311,7 +1320,28 @@ def create_dispute():
             except Exception:
                 connection.rollback()
 
-        # Look up the reported user (farmer/seller of the listing) if listingId is provided
+        if reported_listing_id:
+            try:
+                cursor.execute(
+                    """
+                    SELECT * FROM disputes
+                    WHERE reporter_id = %s
+                      AND (listing_id = %s OR reported_listing_id = %s)
+                    ORDER BY 1 DESC LIMIT 1
+                    """,
+                    (reporter_id, reported_listing_id, reported_listing_id)
+                )
+                existing_dispute = cursor.fetchone()
+                if existing_dispute:
+                    return jsonify({
+                        'success': False,
+                        'already_disputed': True,
+                        'message': 'You have already submitted a dispute report for this livestock listing.',
+                        'dispute': existing_dispute
+                    }), 409
+            except Exception:
+                pass
+
         reported_user_id = data.get('reportedUserId')
         if not reported_user_id and reported_listing_id:
             try:
@@ -1336,9 +1366,9 @@ def create_dispute():
                 INSERT INTO disputes (
                     report_code, listing_id, reported_listing_id,
                     reporter_id, reported_user_id, issue_title, reporter_statement,
-                    priority, dispute_status, reason, description, status
+                    priority, dispute_status, reason, description, proof_images, status
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, 'normal', 'open', %s, %s, 'pending')
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'normal', 'open', %s, %s, %s, 'pending')
             """
             write_cursor.execute(
                 query,
@@ -1351,7 +1381,8 @@ def create_dispute():
                     reason,
                     description,
                     reason,
-                    description
+                    description,
+                    proofs_json
                 )
             )
         except Exception:
@@ -1377,9 +1408,98 @@ def create_dispute():
         }), 201
     except Exception as e:
         if connection:
-            connection.rollback()
+            try:
+                connection.rollback()
+            except Exception:
+                pass
         print("Create Dispute Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if connection:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
+@app.route('/api/disputes/check', methods=['GET'])
+def check_existing_dispute():
+    connection = None
+    cursor = None
+    try:
+        reporter_id = request.args.get('reporterId') or request.args.get('bidderId')
+        listing_id = request.args.get('listingId')
+
+        if not reporter_id or not listing_id:
+            return jsonify({'success': True, 'has_dispute': False, 'dispute': None}), 200
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT * FROM disputes
+            WHERE reporter_id = %s
+              AND (listing_id = %s OR reported_listing_id = %s)
+            ORDER BY 1 DESC LIMIT 1
+            """,
+            (reporter_id, listing_id, listing_id)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'success': True, 'has_dispute': False, 'dispute': None}), 200
+
+        raw_status = str(row.get('status') or row.get('dispute_status') or 'pending').strip().lower()
+        if raw_status in ('resolved', 'approved', 'accepted', 'upheld'):
+            normalized_status = 'resolved'
+            decision_text = (
+                row.get('admin_decision')
+                or row.get('resolution_notes')
+                or row.get('admin_notes')
+                or 'Resolved by Admin — Dispute upheld / action taken.'
+            )
+        elif raw_status in ('dismissed', 'rejected', 'declined'):
+            normalized_status = 'dismissed'
+            decision_text = (
+                row.get('admin_decision')
+                or row.get('resolution_notes')
+                or row.get('admin_notes')
+                or 'Dismissed by Admin — No violation found.'
+            )
+        else:
+            normalized_status = 'pending'
+            decision_text = None
+
+        proofs = []
+        if row.get('proof_images'):
+            try:
+                parsed = json.loads(row['proof_images']) if isinstance(row['proof_images'], str) else row['proof_images']
+                if isinstance(parsed, list):
+                    proofs = [str(p) for p in parsed if p]
+            except Exception:
+                proofs = []
+
+        return jsonify({
+            'success': True,
+            'has_dispute': True,
+            'dispute': {
+                'dispute_id': row.get('dispute_id') or row.get('id'),
+                'report_code': row.get('report_code') or '',
+                'reason': row.get('reason') or row.get('issue_title') or 'Dispute Report',
+                'description': row.get('description') or row.get('reporter_statement') or '',
+                'status': normalized_status,
+                'raw_status': raw_status,
+                'decision': decision_text,
+                'proof_images': proofs
+            }
+        }), 200
+    except Exception as e:
+        print("Check Dispute Error:", str(e))
+        return jsonify({'success': True, 'has_dispute': False, 'dispute': None}), 200
     finally:
         if cursor:
             cursor.close()
