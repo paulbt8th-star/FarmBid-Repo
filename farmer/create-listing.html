@@ -158,7 +158,7 @@
       <!-- MULTI-PHOTO DRAG & DROP UPLOAD -->
       <div class="form-group">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <label class="form-label" style="margin-bottom: 0;">Livestock Photos (Up to 6 images)</label>
+          <label class="form-label" style="margin-bottom: 0;">Livestock Photos (Required, up to 6 images) *</label>
           <span id="photoCounter" style="font-size: 0.78rem; color: #666; font-weight: 600;">0 / 6 photos</span>
         </div>
 
@@ -179,9 +179,9 @@
 
       <!-- VETERINARY / COMPLIANCE DOCUMENTS UPLOAD -->
       <div class="form-group">
-        <label class="form-label" for="docInput">Verification & Compliance Documents (Optional)</label>
-        <div style="font-size: 0.78rem; color: #666; margin-bottom: 6px;">Attach Vet Health Certificate, Ownership Certificate, or Transfer Permit to reassure buyers against scams.</div>
-        <input type="file" id="docInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple style="padding: 8px;">
+        <label class="form-label" for="docInput">Verification & Compliance Documents (Required) *</label>
+        <div style="font-size: 0.78rem; color: #666; margin-bottom: 6px;">Attach at least one Vet Health Certificate, Ownership Certificate, or Transfer Permit.</div>
+        <input type="file" id="docInput" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple required style="padding: 8px;">
         <div id="docList" style="font-size: 0.8rem; color: #1e5631; margin-top: 6px; font-weight: 600;"></div>
       </div>
 
@@ -300,62 +300,52 @@
         return;
       }
 
+      if (selectedFiles.length === 0) {
+        alert('Please upload at least one livestock photo before publishing.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publish Listing to Marketplace';
+        }
+        isSubmitting = false;
+        return;
+      }
+
+      if (selectedDocs.length === 0) {
+        alert('Please attach at least one verification or compliance document before publishing.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publish Listing to Marketplace';
+        }
+        isSubmitting = false;
+        return;
+      }
+
       try {
         let uploadedImageUrls = [];
         let uploadedDocUrls = [];
 
         // 1. Upload livestock photos
-        if (selectedFiles.length > 0) {
-          const formData = new FormData();
-          selectedFiles.forEach(file => {
-            formData.append('images', file);
-          });
+        const formData = new FormData();
+        selectedFiles.forEach(file => {
+          formData.append('images', file);
+        });
 
-          const uploadRes = await fetch('/api/upload-livestock-images', {
-            method: 'POST',
-            body: formData
-          });
+        const uploadRes = await fetch('/api/upload-livestock-images', {
+          method: 'POST',
+          body: formData
+        });
 
-          const uploadData = await uploadRes.json();
-          if (uploadRes.ok && uploadData.success) {
-            uploadedImageUrls = uploadData.images;
-          } else {
-            alert('Image upload failed: ' + (uploadData.message || 'Unknown error'));
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Publish Listing to Marketplace';
-            }
-            isSubmitting = false;
-            return;
-          }
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.success && Array.isArray(uploadData.images) && uploadData.images.length > 0) {
+          uploadedImageUrls = uploadData.images;
         } else {
-          uploadedImageUrls = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55'];
-        }
-
-        // 2. Upload compliance documents if selected
-        if (selectedDocs.length > 0) {
-          const docFormData = new FormData();
-          selectedDocs.forEach(doc => {
-            docFormData.append('images', doc);
-          });
-
-          const docUploadRes = await fetch('/api/upload-livestock-images', {
-            method: 'POST',
-            body: docFormData
-          });
-
-          const docUploadData = await docUploadRes.json();
-          if (docUploadRes.ok && docUploadData.success && Array.isArray(docUploadData.images) && docUploadData.images.length > 0) {
-            uploadedDocUrls = docUploadData.images;
-          } else {
-            alert('Document upload failed: ' + (docUploadData.message || 'Could not upload compliance document.'));
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'Publish Listing to Marketplace';
-            }
-            isSubmitting = false;
-            return;
+          alert('Image upload failed: ' + (uploadData.message || 'Unknown error'));
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publish Listing to Marketplace';
           }
+          isSubmitting = false;
+          return;
         }
 
         // 3. Prevent browser/timezone offset conversion by splitting exact literal input components

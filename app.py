@@ -2119,6 +2119,12 @@ def create_listing():
         if not farmer_id or not animal_type or starting_price_val <= 0:
             return jsonify({'success': False, 'message': 'Please fill in all required listing details and starting price.'}), 400
 
+        if not clean_images:
+            return jsonify({'success': False, 'message': 'At least one livestock photo is required.'}), 400
+
+        if not clean_docs:
+            return jsonify({'success': False, 'message': 'At least one verification or compliance document is required.'}), 400
+
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
