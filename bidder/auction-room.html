@@ -962,9 +962,23 @@
         if (disputeProofPreview) disputeProofPreview.innerHTML = '';
         disputeProofFiles = [];
         await renderDisputeCardState(currentListingId, reporterId);
+      } else if (res.status === 409 || data.already_disputed) {
+        alert(data.message || 'You have already submitted a dispute for this livestock listing.');
+        closeDisputeModal();
+        await renderDisputeCardState(currentListingId, reporterId);
+        const cardEl = document.getElementById('reportIssueCard');
+        if (cardEl && cardEl.querySelector('button[onclick="openDisputeModal()"]')) {
+          cardEl.style.border = '1px solid #f59e0b';
+          cardEl.style.background = '#fffbeb';
+          cardEl.innerHTML = `
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: #92400e; margin-bottom: 6px;">Dispute on review</h3>
+            <p style="font-size: 0.78rem; color: #78350f; margin-bottom: 0;">
+              You already submitted a dispute report for this livestock listing. Duplicate disputes are disabled.
+            </p>
+          `;
+        }
       } else {
         alert(data.message || 'Failed to submit dispute.');
-        await renderDisputeCardState(currentListingId, reporterId);
       }
     } catch (err) {
       console.error('Error submitting dispute:', err);
