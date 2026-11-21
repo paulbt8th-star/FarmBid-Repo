@@ -1538,6 +1538,8 @@ def get_farmer_delivery_queue(farmer_id):
         except Exception:
             connection.rollback()
 
+        now_pht = get_pht_now()
+
         cursor.execute("""
             SELECT l.*,
                    (SELECT MAX(b.bid_amount) FROM bids b WHERE b.listing_id = l.listing_id) AS winning_bid,
@@ -1548,13 +1550,13 @@ def get_farmer_delivery_queue(farmer_id):
             WHERE l.farmer_id = %s
               AND (
                   LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'completed', 'settlement', 'pending')
-                  OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
+                  OR (l.auction_ends_at IS NOT NULL AND (l.auction_ends_at <= NOW() OR l.auction_ends_at <= %s))
               )
               AND EXISTS (
                   SELECT 1 FROM bids b WHERE b.listing_id = l.listing_id
               )
             ORDER BY l.created_at DESC
-        """, (farmer_id,))
+        """, (farmer_id, now_pht))
         listings = cursor.fetchall()
 
         for item in listings:
