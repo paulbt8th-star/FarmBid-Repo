@@ -468,7 +468,9 @@
         return;
       }
 
+      const currentUserId = user.id || user.user_id || user.userId;
       await renderDisputeCardState(listingId, currentUserId);
+      const bids = (bidsRes.ok && bidsResult.success) ? bidsResult.data : [];
 
       auctionPhotos = Array.isArray(item.images) && item.images.length > 0
         ? item.images
