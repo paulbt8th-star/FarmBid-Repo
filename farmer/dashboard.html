@@ -334,7 +334,7 @@
           );
           pendingCnt = activePendingListings.length;
           pendingAmt = activePendingListings.reduce(
-            (sum, item) => sum + Number(item.winning_bid || item.current_highest_bid || item.starting_price || 0),
+            (sum, item) => sum + Number(item.winning_bid || 0),
             0
           );
         }
@@ -397,7 +397,8 @@
         const activeItem = resultActiveBid.data;
 
         if (cardTitleEl) cardTitleEl.textContent = `${(activeItem.animal_type || 'LIVESTOCK').toUpperCase()} — ${activeItem.weight || 0} KG`;
-        if (cardHighestEl) cardHighestEl.textContent = `₱${Number(activeItem.current_highest_bid || activeItem.starting_price || 0).toLocaleString('en-PH')}`;
+        const highestBidVal = Number(activeItem.current_highest_bid || 0);
+        if (cardHighestEl) cardHighestEl.textContent = highestBidVal > 0 ? `₱${highestBidVal.toLocaleString('en-PH')}` : '₱0.00';
         if (cardStartingEl) cardStartingEl.textContent = `₱${Number(activeItem.starting_price || 0).toLocaleString('en-PH')}`;
         if (viewBtnEl) {
           viewBtnEl.textContent = 'View auction details →';

@@ -746,6 +746,7 @@ def sync_expired_auctions(cursor, farmer_id=None):
               AND auction_ends_at <= NOW()
         """)
 
+# 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
 def get_farmer_metrics(farmer_id):
     connection = None
@@ -763,32 +764,39 @@ def get_farmer_metrics(farmer_id):
 
         now_pht = get_pht_now()
 
+        # 1. Highest active bid (actual bids only; starting_price is NOT potential bid money)
         cursor.execute("""
-            SELECT COALESCE(MAX(current_highest_bid), MAX(starting_price), 0) as max_bid
-            FROM livestock_listings
-            WHERE farmer_id = %s
-              AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
-              AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
+            SELECT COALESCE(MAX(b.bid_amount), 0) AS max_bid
+            FROM bids b
+            JOIN livestock_listings l ON b.listing_id = l.listing_id
+            WHERE l.farmer_id = %s
+              AND LOWER(COALESCE(l.auction_status, '')) IN ('active', 'live')
+              AND (l.auction_ends_at IS NULL OR (l.auction_ends_at > NOW() AND l.auction_ends_at > %s))
         """, (farmer_id, now_pht))
         bid_res = cursor.fetchone() or {}
         highest_bid = float(bid_res.get('max_bid') or 0)
 
+        # 2. Completed count strictly where status is 'completed'
         cursor.execute("""
-            SELECT COUNT(*) as completed_count
+            SELECT COUNT(*) AS completed_count
             FROM livestock_listings
             WHERE farmer_id = %s AND LOWER(COALESCE(auction_status, '')) = 'completed'
         """, (farmer_id,))
         comp_res = cursor.fetchone() or {}
         completed_count = int(comp_res.get('completed_count') or 0)
 
+        # 3. Verification Queue only for ended/expired listings that actually have a bidder
         cursor.execute("""
-            SELECT COUNT(*) as queue_count
-            FROM livestock_listings
-            WHERE farmer_id = %s
-              AND LOWER(COALESCE(auction_status, '')) != 'completed'
+            SELECT COUNT(*) AS queue_count
+            FROM livestock_listings l
+            WHERE l.farmer_id = %s
+              AND LOWER(COALESCE(l.auction_status, '')) != 'completed'
               AND (
-                  LOWER(COALESCE(auction_status, '')) IN ('ended', 'closed', 'settlement', 'pending')
-                  OR (auction_ends_at IS NOT NULL AND (auction_ends_at <= NOW() OR auction_ends_at <= %s))
+                  LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'settlement', 'pending')
+                  OR (l.auction_ends_at IS NOT NULL AND (l.auction_ends_at <= NOW() OR l.auction_ends_at <= %s))
+              )
+              AND EXISTS (
+                  SELECT 1 FROM bids b WHERE b.listing_id = l.listing_id
               )
         """, (farmer_id, now_pht))
         queue_res = cursor.fetchone() or {}
@@ -1521,14 +1529,17 @@ def get_farmer_delivery_queue(farmer_id):
         cursor.execute("""
             SELECT l.*,
                    (SELECT MAX(b.bid_amount) FROM bids b WHERE b.listing_id = l.listing_id) AS winning_bid,
-                   (SELECT u.first_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_first_name,
-                   (SELECT u.last_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_last_name,
-                   (SELECT u.contact_number FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC LIMIT 1) AS winner_contact
+                   (SELECT u.first_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC, b.created_at DESC LIMIT 1) AS winner_first_name,
+                   (SELECT u.last_name FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC, b.created_at DESC LIMIT 1) AS winner_last_name,
+                   (SELECT u.contact_number FROM bids b JOIN users u ON b.bidder_id = u.user_id WHERE b.listing_id = l.listing_id ORDER BY b.bid_amount DESC, b.created_at DESC LIMIT 1) AS winner_contact
             FROM livestock_listings l
             WHERE l.farmer_id = %s
               AND (
                   LOWER(COALESCE(l.auction_status, '')) IN ('ended', 'closed', 'completed', 'settlement', 'pending')
                   OR (l.auction_ends_at IS NOT NULL AND l.auction_ends_at <= NOW())
+              )
+              AND EXISTS (
+                  SELECT 1 FROM bids b WHERE b.listing_id = l.listing_id
               )
             ORDER BY l.created_at DESC
         """, (farmer_id,))
@@ -1549,8 +1560,10 @@ def get_farmer_delivery_queue(farmer_id):
         print("Delivery Queue API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 24. Confirm Livestock Receipt & Settle Escrow to Farmer Wallet (With Transaction Logging)
 @app.route('/api/buyer/confirm-receipt/<int:listing_id>', methods=['POST'])
@@ -1740,51 +1753,95 @@ def get_farmer_notifications(farmer_id):
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
+        try:
+            sync_expired_auctions(cursor, farmer_id)
+            connection.commit()
+        except Exception:
+            connection.rollback()
+
         notifications = []
-        
+
         # 1. Fetch listings belonging to this farmer
-        cursor.execute("SELECT listing_id, animal_type FROM livestock_listings WHERE farmer_id = %s", (farmer_id,))
-        listings = cursor.fetchall()
-        listing_map = {l['listing_id']: l['animal_type'] for l in listings}
+        cursor.execute("""
+            SELECT listing_id, animal_type, breed, auction_status, auction_ends_at, created_at
+            FROM livestock_listings
+            WHERE farmer_id = %s
+            ORDER BY created_at DESC
+        """, (farmer_id,))
+        listings = cursor.fetchall() or []
+        listing_map = {l['listing_id']: l for l in listings}
         listing_ids = list(listing_map.keys())
 
+        bids_by_listing = {}
         if listing_ids:
-            # Format placeholders safely for IN clause
             format_strings = ','.join(['%s'] * len(listing_ids))
             cursor.execute(f"""
-                SELECT bid_amount, created_at, listing_id, bidder_id 
-                FROM bids 
-                WHERE listing_id IN ({format_strings}) 
-                ORDER BY created_at DESC LIMIT 5
+                SELECT bid_id, bid_amount, created_at, listing_id, bidder_id
+                FROM bids
+                WHERE listing_id IN ({format_strings})
+                ORDER BY created_at DESC
             """, tuple(listing_ids))
-            bids = cursor.fetchall()
+            all_bids = cursor.fetchall() or []
 
-            for b in bids:
-                raw_date = b['created_at']
+            for b in all_bids:
+                bids_by_listing.setdefault(b['listing_id'], []).append(b)
+
+            for b in all_bids[:5]:
+                raw_date = b.get('created_at')
                 time_str = raw_date.strftime('%Y-%m-%d %H:%M') if hasattr(raw_date, 'strftime') else str(raw_date or 'Recent')
-                animal = listing_map.get(b['listing_id'], 'Livestock')
-                
-                # Fetch bidder name safely
+                l_info = listing_map.get(b['listing_id']) or {}
+                animal = l_info.get('animal_type') or 'Livestock'
+
                 cursor.execute("SELECT first_name, last_name FROM users WHERE user_id = %s", (b['bidder_id'],))
                 bidder = cursor.fetchone()
                 bidder_name = f"{bidder['first_name'] if bidder else 'Buyer'} {bidder['last_name'] if bidder else ''}".strip()
 
                 notifications.append({
                     'title': "New Bid Received",
-                    'message': f"{bidder_name} bid ₱{float(b['bid_amount'] or 0):,.2f} on {animal} (AUC-{str(b['listing_id']).zfill(3)})",
+                    'message': f"{bidder_name} bid ₱{float(b.get('bid_amount') or 0):,.2f} on {animal} (AUC-{str(b['listing_id']).zfill(3)})",
                     'time': time_str,
                     'type': 'bid'
                 })
 
-        return jsonify({'success': True, 'data': notifications}), 200
+        # 2. Notify farmer when an ended/expired listing has no bidders
+        now_dt = datetime.now()
+        for l in listings:
+            lid = l['listing_id']
+            if len(bids_by_listing.get(lid, [])) > 0:
+                continue
+
+            raw_status = str(l.get('auction_status') or '').lower()
+            ends_at = l.get('auction_ends_at')
+            is_expired = False
+            if ends_at:
+                ends_dt = datetime.fromisoformat(str(ends_at).replace(' ', 'T')) if isinstance(ends_at, str) else ends_at
+                if ends_dt and now_dt >= ends_dt:
+                    is_expired = True
+
+            if raw_status in ('ended', 'closed') or is_expired:
+                animal = l.get('animal_type') or 'Livestock'
+                breed_part = f" ({l['breed']})" if l.get('breed') else ""
+                raw_time = ends_at or l.get('created_at')
+                time_str = raw_time.strftime('%Y-%m-%d %H:%M') if hasattr(raw_time, 'strftime') else str(raw_time or 'Ended')
+
+                notifications.append({
+                    'title': "Auction Ended With No Bidder",
+                    'message': f"Your {animal}{breed_part} listing (AUC-{str(lid).zfill(3)}) ended with no bids placed.",
+                    'time': time_str,
+                    'type': 'no_bidder'
+                })
+
+        return jsonify({'success': True, 'data': notifications[:10]}), 200
 
     except Exception as e:
         print("Farmer Notifications API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # Get Admin Notifications API
 @app.route('/api/admin/notifications', methods=['GET'])
