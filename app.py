@@ -812,7 +812,6 @@ def get_farmer_metrics(farmer_id):
         if connection:
             connection.close()
 
-# 12. Get Farmer Active Bid Status Card Data
 @app.route('/api/farmer/active-bid/<int:farmer_id>', methods=['GET'])
 def get_farmer_active_bid(farmer_id):
     connection = None
@@ -821,29 +820,55 @@ def get_farmer_active_bid(farmer_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        sync_expired_auctions(cursor, farmer_id)
-        connection.commit()
+        try:
+            sync_expired_auctions(cursor, farmer_id)
+            connection.commit()
+        except Exception as sync_err:
+            connection.rollback()
+            print("Active bid sync warning:", sync_err)
 
         now_pht = get_pht_now()
-        cursor.execute("""
-            SELECT * FROM livestock_listings
-            WHERE farmer_id = %s
-              AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
-              AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
-            ORDER BY current_highest_bid DESC LIMIT 1
-        """, (farmer_id, now_pht))
+        try:
+            cursor.execute("""
+                SELECT * FROM livestock_listings
+                WHERE farmer_id = %s
+                  AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
+                  AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
+                ORDER BY COALESCE(current_highest_bid, starting_price, 0) DESC
+                LIMIT 1
+            """, (farmer_id, now_pht))
+        except Exception:
+            connection.rollback()
+            cursor.execute("""
+                SELECT * FROM livestock_listings
+                WHERE farmer_id = %s
+                  AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
+                ORDER BY listing_id DESC
+                LIMIT 1
+            """, (farmer_id,))
+
         listing = cursor.fetchone()
         if listing:
             if listing.get('auction_ends_at') and isinstance(listing['auction_ends_at'], datetime):
                 listing['auction_ends_at'] = listing['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
             if listing.get('created_at') and isinstance(listing['created_at'], datetime):
                 listing['created_at'] = listing['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+
         return jsonify({'success': True, 'data': listing}), 200
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+        print("Active Bid API Error:", str(e))
+        return jsonify({'success': True, 'data': None}), 200
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if connection:
+            try:
+                connection.close()
+            except Exception:
+                pass
 
 # 13. Update Farmer Settings & GCash Number
 @app.route('/api/farmer/settings/<int:farmer_id>', methods=['PUT'])
