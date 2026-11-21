@@ -2046,6 +2046,158 @@ def get_farmer_listings(farmer_id):
         if connection:
             connection.close()
 
+@app.route('/api/listings', methods=['POST'])
+def create_listing():
+    connection = None
+    cursor = None
+    try:
+        data = request.get_json(silent=True) or {}
+
+        farmer_id = (
+            data.get('farmerId')
+            or data.get('farmer_id')
+            or data.get('userId')
+            or data.get('user_id')
+            or session.get('user_id')
+        )
+        animal_type = (data.get('animalType') or data.get('animal_type') or '').strip()
+        breed = (data.get('breed') or '').strip()
+        gender = (data.get('gender') or data.get('sex') or '').strip()
+        age = data.get('age')
+        weight = data.get('weight')
+        starting_price = data.get('startingPrice') or data.get('starting_price')
+        description = (data.get('description') or '').strip()
+        auction_ends_at = (
+            data.get('auctionEndsAt')
+            or data.get('auction_ends_at')
+            or data.get('closingDateTime')
+            or data.get('closing_datetime')
+        )
+
+        raw_images = data.get('images')
+        if raw_images is None:
+            raw_images = data.get('imageUrls') or data.get('image_url') or []
+        if isinstance(raw_images, str):
+            try:
+                parsed_imgs = json.loads(raw_images) if raw_images.startswith('[') else [raw_images]
+            except Exception:
+                parsed_imgs = [raw_images]
+        elif isinstance(raw_images, list):
+            parsed_imgs = raw_images
+        else:
+            parsed_imgs = []
+        clean_images = [str(u).strip() for u in parsed_imgs if u and str(u).strip()]
+
+        raw_docs = data.get('documents')
+        if raw_docs is None:
+            raw_docs = data.get('documentUrls') or []
+        if isinstance(raw_docs, str):
+            try:
+                parsed_docs = json.loads(raw_docs) if raw_docs.startswith('[') else [raw_docs]
+            except Exception:
+                parsed_docs = [raw_docs]
+        elif isinstance(raw_docs, list):
+            parsed_docs = raw_docs
+        else:
+            parsed_docs = []
+        clean_docs = [str(u).strip() for u in parsed_docs if u and str(u).strip()]
+
+        try:
+            weight_val = float(str(weight).replace(',', '').strip()) if weight not in (None, '') else 0.0
+        except (ValueError, TypeError):
+            weight_val = 0.0
+
+        try:
+            starting_price_val = float(str(starting_price).replace(',', '').strip()) if starting_price not in (None, '') else 0.0
+        except (ValueError, TypeError):
+            starting_price_val = 0.0
+
+        if not farmer_id or not animal_type or starting_price_val <= 0:
+            return jsonify({'success': False, 'message': 'Please fill in all required listing details and starting price.'}), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        images_json = json.dumps(clean_images)
+        docs_json = json.dumps(clean_docs)
+        primary_image = clean_images[0] if clean_images else None
+
+        insert_attempts = [
+            (
+                """
+                INSERT INTO livestock_listings (
+                    farmer_id, animal_type, breed, gender, age, weight,
+                    starting_price, current_highest_bid, description,
+                    image_url, documents, auction_status, auction_ends_at, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 0, %s, %s, %s, 'live', %s, NOW())
+                """,
+                (
+                    farmer_id, animal_type, breed, gender, age, weight_val,
+                    starting_price_val, description, primary_image or images_json,
+                    docs_json, auction_ends_at
+                )
+            ),
+            (
+                """
+                INSERT INTO livestock_listings (
+                    farmer_id, animal_type, breed, weight,
+                    starting_price, description, image_url,
+                    auction_status, auction_ends_at, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'live', %s, NOW())
+                """,
+                (
+                    farmer_id, animal_type, breed, weight_val,
+                    starting_price_val, description, primary_image or images_json,
+                    auction_ends_at
+                )
+            ),
+        ]
+
+        last_err = None
+        created_id = None
+        for sql_query, params in insert_attempts:
+            try:
+                cursor.execute(sql_query, params)
+                created_id = cursor.lastrowid
+                break
+            except Exception as exc:
+                connection.rollback()
+                last_err = exc
+
+        if created_id is None and last_err:
+            raise last_err
+
+        connection.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Livestock listing created successfully!',
+            'listing_id': created_id,
+            'data': {'listing_id': created_id}
+        }), 201
+
+    except Exception as e:
+        if connection:
+            try:
+                connection.rollback()
+            except Exception:
+                pass
+        print("Create Listing Error:", str(e))
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if connection:
+            try:
+                connection.close()
+            except Exception:
+                pass
+
 # Admin Settings Xendit Status API
 @app.route('/api/admin/settings/xendit-status', methods=['GET'])
 def get_admin_xendit_status():
