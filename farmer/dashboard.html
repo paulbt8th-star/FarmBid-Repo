@@ -310,7 +310,9 @@
       });
     }
 
-      // 1. Fetch live wallet & delivery queue data
+    const farmerId = user.user_id || user.id || user.userId;
+
+    // 1. Fetch live wallet & delivery queue data
     let resultWallet = null;
     let resultQueue = null;
 
@@ -505,7 +507,7 @@
       console.error('Error fetching farmer notifications:', err);
     }
   });
-</script>
-<script src="../assets/js/date-pill.js"></script>
+  </script>
+  <script src="../assets/js/date-pill.js"></script>
 </body>
 </html>
