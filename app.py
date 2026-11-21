@@ -1263,6 +1263,20 @@ def get_admin_disputes():
                 if reporter else f"User #{d.get('reporter_id') or '?'}"
             )
 
+            raw_proofs = d.get('proof_images')
+            parsed_proofs = []
+            if raw_proofs:
+                if isinstance(raw_proofs, list):
+                    parsed_proofs = [str(p).strip() for p in raw_proofs if p and str(p).strip()]
+                elif isinstance(raw_proofs, str):
+                    try:
+                        loaded = json.loads(raw_proofs) if raw_proofs.strip().startswith('[') else [raw_proofs]
+                        if isinstance(loaded, list):
+                            parsed_proofs = [str(p).strip() for p in loaded if p and str(p).strip()]
+                    except Exception:
+                        parsed_proofs = [raw_proofs.strip()] if raw_proofs.strip() else []
+            d['proof_images'] = parsed_proofs
+
             if d.get('created_at') and isinstance(d['created_at'], datetime):
                 d['created_at'] = d['created_at'].strftime('%Y-%m-%d %H:%M')
 
