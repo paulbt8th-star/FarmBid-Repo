@@ -181,10 +181,9 @@
               <h2 class="dash-card-title">Active Dispute Queue</h2>
               <p class="dash-card-subtitle">Reports awaiting marketplace operations review.</p>
             </div>
-            <span class="badge badge-red">Live queue</span>
           </div>
 
-          <div style="font-size: 0.78rem; font-weight: 600; color: var(--status-red-text); margin-bottom: 12px;" id="disputeQueueCount">🚨 0 reports in queue</div>
+          <div style="font-size: 0.78rem; font-weight: 600; color: var(--status-red-text); margin-bottom: 12px;" id="disputeQueueCount"> 0 reports in queue</div>
 
           <div class="table-responsive">
             <table class="data-table" style="font-size: 0.8rem;">
@@ -421,13 +420,30 @@
               </td>
             </tr>`;
         } else {
-          disputeBody.innerHTML = disputes.map(d => `
-            <tr>
-              <td style="font-family: monospace;">#${String(d.dispute_id).padStart(4, '0')}</td>
-              <td>${d.reason || d.description || 'Dispute report'}</td>
-              <td style="text-align: right;"><span class="badge badge-red">${d.status || 'Open'}</span></td>
-            </tr>
-          `).join('');
+          disputeBody.innerHTML = disputes.map(d => {
+            const st = String(d.status || d.dispute_status || 'pending').trim().toLowerCase();
+            let badgeBg = '#fef3c7';
+            let badgeColor = '#92400e';
+            if (st === 'resolved') {
+              badgeBg = '#dcfce7';
+              badgeColor = '#166534';
+            } else if (st === 'dismissed') {
+              badgeBg = '#fee2e2';
+              badgeColor = '#991b1b';
+            }
+
+            return `
+              <tr>
+                <td style="font-family: monospace;">#${String(d.dispute_id).padStart(4, '0')}</td>
+                <td>${d.reason || d.description || 'Dispute report'}</td>
+                <td style="text-align: right;">
+                  <span style="background: ${badgeBg}; color: ${badgeColor}; padding: 3px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: lowercase;">
+                    ${st}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('');
         }
       }
 
