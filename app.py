@@ -746,7 +746,6 @@ def sync_expired_auctions(cursor, farmer_id=None):
               AND auction_ends_at <= NOW()
         """)
 
-# 11. Get Farmer Dashboard Metrics (Strictly separated)
 @app.route('/api/farmer/metrics/<int:farmer_id>', methods=['GET'])
 def get_farmer_metrics(farmer_id):
     connection = None
@@ -755,12 +754,15 @@ def get_farmer_metrics(farmer_id):
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
 
-        sync_expired_auctions(cursor, farmer_id)
-        connection.commit()
+        try:
+            sync_expired_auctions(cursor, farmer_id)
+            connection.commit()
+        except Exception as sync_err:
+            connection.rollback()
+            print("Sync expired auctions warning:", sync_err)
 
         now_pht = get_pht_now()
 
-        # 1. Highest active bid (only truly live/unexpired listings)
         cursor.execute("""
             SELECT COALESCE(MAX(current_highest_bid), MAX(starting_price), 0) as max_bid
             FROM livestock_listings
@@ -768,19 +770,17 @@ def get_farmer_metrics(farmer_id):
               AND LOWER(COALESCE(auction_status, '')) IN ('active', 'live')
               AND (auction_ends_at IS NULL OR (auction_ends_at > NOW() AND auction_ends_at > %s))
         """, (farmer_id, now_pht))
-        bid_res = cursor.fetchone()
-        highest_bid = float(bid_res['max_bid'] or 0)
+        bid_res = cursor.fetchone() or {}
+        highest_bid = float(bid_res.get('max_bid') or 0)
 
-        # 2. Completed count strictly where status is 'completed'
         cursor.execute("""
             SELECT COUNT(*) as completed_count
             FROM livestock_listings
             WHERE farmer_id = %s AND LOWER(COALESCE(auction_status, '')) = 'completed'
         """, (farmer_id,))
-        comp_res = cursor.fetchone()
-        completed_count = int(comp_res['completed_count'] or 0)
+        comp_res = cursor.fetchone() or {}
+        completed_count = int(comp_res.get('completed_count') or 0)
 
-        # 3. Verification Queue / Pending Payment Count (ended/expired or settlement, excluding completed)
         cursor.execute("""
             SELECT COUNT(*) as queue_count
             FROM livestock_listings
@@ -791,8 +791,8 @@ def get_farmer_metrics(farmer_id):
                   OR (auction_ends_at IS NOT NULL AND (auction_ends_at <= NOW() OR auction_ends_at <= %s))
               )
         """, (farmer_id, now_pht))
-        queue_res = cursor.fetchone()
-        queue_count = int(queue_res['queue_count'] or 0)
+        queue_res = cursor.fetchone() or {}
+        queue_count = int(queue_res.get('queue_count') or 0)
 
         return jsonify({
             'success': True,
@@ -807,8 +807,10 @@ def get_farmer_metrics(farmer_id):
         print("Metrics API Error:", str(e))
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # 12. Get Farmer Active Bid Status Card Data
 @app.route('/api/farmer/active-bid/<int:farmer_id>', methods=['GET'])
