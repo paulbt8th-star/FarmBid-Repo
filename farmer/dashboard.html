@@ -310,27 +310,31 @@
       });
     }
 
-    const farmerId = user.user_id || user.id || user.userId;
+      // 1. Fetch live wallet & delivery queue data
+    let resultWallet = null;
+    let resultQueue = null;
 
     try {
-      // 1. Fetch live wallet & pending settlement data
       const resWallet = await fetch(`/api/farmer/wallet/${farmerId}`);
-      const resultWallet = await resWallet.json();
+      resultWallet = await resWallet.json();
 
-      // Fetch delivery queue items
       const resQueue = await fetch(`/api/farmer/delivery-queue/${farmerId}`);
-      const resultQueue = await resQueue.json();
+      resultQueue = await resQueue.json();
 
-      if (resWallet.ok && resultWallet.success) {
-        const data = resultWallet.data;
-        
+      if (resWallet.ok && resultWallet?.success) {
+        const data = resultWallet.data || {};
         let pendingAmt = Number(data.pending_amount || 0);
         let pendingCnt = Number(data.pending_count || 0);
 
-        if (resQueue.ok && resultQueue.success && resultQueue.data) {
-          const activePendingListings = resultQueue.data.filter(item => String(item.auction_status || '').toLowerCase() !== 'completed');
+        if (resQueue.ok && resultQueue?.success && Array.isArray(resultQueue.data)) {
+          const activePendingListings = resultQueue.data.filter(
+            item => String(item.auction_status || '').toLowerCase() !== 'completed'
+          );
           pendingCnt = activePendingListings.length;
-          pendingAmt = activePendingListings.reduce((sum, item) => sum + Number(item.winning_bid || item.current_highest_bid || item.starting_price || 0), 0);
+          pendingAmt = activePendingListings.reduce(
+            (sum, item) => sum + Number(item.winning_bid || item.current_highest_bid || item.starting_price || 0),
+            0
+          );
         }
 
         const rawBal = data.balance ?? data.wallet_balance ?? data.available_balance ?? 0;
@@ -349,28 +353,36 @@
 
         const trackerCompCountEl = document.getElementById('trackerCompletedCount');
         if (trackerCompCountEl) {
-          trackerCompCountEl.textContent = `${data.withdrawals ? data.withdrawals.length : 0} completed payouts`;
+          trackerCompCountEl.textContent = `${Array.isArray(data.withdrawals) ? data.withdrawals.length : 0} completed payouts`;
         }
       }
+    } catch (err) {
+      console.error('Error loading wallet or delivery queue:', err);
+    }
 
-      // 2. Fetch live metrics (Highest Bid, Verification Queue, Completed Count)
+    // 2. Fetch live metrics (Highest Bid, Verification Queue, Completed Count)
+    try {
       const resMetrics = await fetch(`/api/farmer/metrics/${farmerId}`);
       const resultMetrics = await resMetrics.json();
 
-      if (resMetrics.ok && resultMetrics.success) {
+      if (resMetrics.ok && resultMetrics?.success && resultMetrics.data) {
         const mData = resultMetrics.data;
-        
+
         const topBidEl = document.getElementById('topHighestBid');
-        if (topBidEl) topBidEl.textContent = `₱${Number(mData.highest_bid).toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
+        if (topBidEl) topBidEl.textContent = `₱${Number(mData.highest_bid || 0).toLocaleString('en-PH', { minimumFractionDigits: 0 })}`;
 
         const topQueueEl = document.getElementById('topVerificationQueue');
-        if (topQueueEl) topQueueEl.textContent = mData.verification_queue_count;
+        if (topQueueEl) topQueueEl.textContent = mData.verification_queue_count ?? 0;
 
         const topCompEl = document.getElementById('topCompletedCount');
-        if (topCompEl) topCompEl.textContent = mData.completed_count;
+        if (topCompEl) topCompEl.textContent = mData.completed_count ?? 0;
       }
+    } catch (err) {
+      console.error('Error loading farmer metrics:', err);
+    }
 
-      // 3. Fetch Active Bid Status Card Data
+    // 3. Fetch Active Bid Status Card Data
+    try {
       const resActiveBid = await fetch(`/api/farmer/active-bid/${farmerId}`);
       const resultActiveBid = await resActiveBid.json();
 
@@ -379,13 +391,14 @@
       const cardStartingEl = document.getElementById('activeCardStarting');
       const viewBtnEl = document.getElementById('viewActiveAuctionBtn');
 
-      if (resActiveBid.ok && resultActiveBid.success && resultActiveBid.data) {
+      if (resActiveBid.ok && resultActiveBid?.success && resultActiveBid.data) {
         const activeItem = resultActiveBid.data;
-        
+
         if (cardTitleEl) cardTitleEl.textContent = `${(activeItem.animal_type || 'LIVESTOCK').toUpperCase()} — ${activeItem.weight || 0} KG`;
         if (cardHighestEl) cardHighestEl.textContent = `₱${Number(activeItem.current_highest_bid || activeItem.starting_price || 0).toLocaleString('en-PH')}`;
         if (cardStartingEl) cardStartingEl.textContent = `₱${Number(activeItem.starting_price || 0).toLocaleString('en-PH')}`;
         if (viewBtnEl) {
+          viewBtnEl.textContent = 'View auction details →';
           viewBtnEl.onclick = (e) => {
             e.preventDefault();
             window.location.href = `auction-details.html?id=${activeItem.listing_id}`;
@@ -403,63 +416,66 @@
           };
         }
       }
-
-      // 4. Fetch Buyer Payments & Verification data for the dashboard card
-      const paymentsContainer = document.getElementById('dashboardBuyerPaymentsContainer');
-      if (resQueue.ok && resultQueue.success && paymentsContainer) {
-        const activePendingListings = (resultQueue.data || []).filter(item => String(item.auction_status || '').toLowerCase() !== 'completed');
-        
-        if (activePendingListings.length === 0) {
-          paymentsContainer.innerHTML = `
-            <div style="padding: 16px; text-align: center; color: #666; font-size: 0.82rem; background: #fafafa; border-radius: 6px;">
-              No buyer payments or active verification records.
-            </div>
-          `;
-        } else {
-          paymentsContainer.innerHTML = activePendingListings.map(item => `
-            <div style="border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 12px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: 700; font-size: 0.88rem; color: #111;">${item.animal_type || 'Livestock'} · ${Number(item.weight || 0)} kg</div>
-                <div style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')} · Winner: <strong>${item.winner_first_name || 'Test'} ${item.winner_last_name || 'Bidder'}</strong></div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-weight: 800; color: var(--brand-dark-green); font-size: 0.9rem;">₱${Number(item.winning_bid || item.current_highest_bid || item.starting_price).toLocaleString('en-PH')}</div>
-                <span style="font-size: 0.65rem; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Awaiting Delivery Confirmation</span>
-              </div>
-            </div>
-          `).join('');
-        }
-      }
-
-      // 5. Render Completed Sales Card on Dashboard
-      const completedSalesContainer = document.getElementById('dashboardCompletedSalesContainer');
-      if (resQueue.ok && resultQueue.success && completedSalesContainer) {
-        const completedListings = (resultQueue.data || []).filter(item => String(item.auction_status || '').toLowerCase() === 'completed');
-        
-        if (completedListings.length === 0) {
-          completedSalesContainer.innerHTML = `
-            <div style="padding: 16px; text-align: center; color: #666; font-size: 0.82rem; background: #fafafa; border-radius: 6px;">
-              No completed sales. Closed and settled transactions will appear here.
-            </div>
-          `;
-        } else {
-          completedSalesContainer.innerHTML = completedListings.map(item => `
-            <div style="border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 12px; background: #fafdfa; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: 700; font-size: 0.88rem; color: #1e5631;">${item.animal_type || 'Livestock'} · ${Number(item.weight || 0)} kg</div>
-                <div style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')} · Buyer: <strong>${item.winner_first_name || 'Test'} ${item.winner_last_name || 'Bidder'}</strong></div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-weight: 800; color: #166534; font-size: 0.9rem;">₱${Number(item.winning_bid || item.current_highest_bid || item.starting_price).toLocaleString('en-PH')}</div>
-                <span style="font-size: 0.65rem; background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Settled</span>
-              </div>
-            </div>
-          `).join('');
-        }
-      }
-
     } catch (err) {
-      console.error('Error loading live dashboard metrics:', err);
+      console.error('Error loading active bid card:', err);
+    }
+
+    // 4. Render Buyer Payments & Verification Card
+    const paymentsContainer = document.getElementById('dashboardBuyerPaymentsContainer');
+    if (resultQueue?.success && paymentsContainer) {
+      const activePendingListings = (resultQueue.data || []).filter(
+        item => String(item.auction_status || '').toLowerCase() !== 'completed'
+      );
+
+      if (activePendingListings.length === 0) {
+        paymentsContainer.innerHTML = `
+          <div style="padding: 16px; text-align: center; color: #666; font-size: 0.82rem; background: #fafafa; border-radius: 6px;">
+            No buyer payments or active verification records.
+          </div>
+        `;
+      } else {
+        paymentsContainer.innerHTML = activePendingListings.map(item => `
+          <div style="border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 12px; background: #fff; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: #111;">${item.animal_type || 'Livestock'} · ${Number(item.weight || 0)} kg</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')} · Winner: <strong>${item.winner_first_name || 'Test'} ${item.winner_last_name || 'Bidder'}</strong></div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; color: var(--brand-dark-green); font-size: 0.9rem;">₱${Number(item.winning_bid || item.current_highest_bid || item.starting_price).toLocaleString('en-PH')}</div>
+              <span style="font-size: 0.65rem; background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 600;">Awaiting Delivery Confirmation</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 5. Render Completed Sales Card on Dashboard
+    const completedSalesContainer = document.getElementById('dashboardCompletedSalesContainer');
+    if (resultQueue?.success && completedSalesContainer) {
+      const completedListings = (resultQueue.data || []).filter(
+        item => String(item.auction_status || '').toLowerCase() === 'completed'
+      );
+
+      if (completedListings.length === 0) {
+        completedSalesContainer.innerHTML = `
+          <div style="padding: 16px; text-align: center; color: #666; font-size: 0.82rem; background: #fafafa; border-radius: 6px;">
+            No completed sales. Closed and settled transactions will appear here.
+          </div>
+        `;
+      } else {
+        completedSalesContainer.innerHTML = completedListings.map(item => `
+          <div style="border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 12px; background: #fafdfa; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; font-size: 0.88rem; color: #1e5631;">${item.animal_type || 'Livestock'} · ${Number(item.weight || 0)} kg</div>
+              <div style="font-size: 0.72rem; color: var(--text-muted);">AUC-${String(item.listing_id).padStart(3, '0')} · Buyer: <strong>${item.winner_first_name || 'Test'} ${item.winner_last_name || 'Bidder'}</strong></div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; color: #166534; font-size: 0.9rem;">₱${Number(item.winning_bid || item.current_highest_bid || item.starting_price).toLocaleString('en-PH')}</div>
+              <span style="font-size: 0.65rem; background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Settled</span>
+            </div>
+          </div>
+        `).join('');
+      }
     }
 
     // 6. Fetch Farmer Notifications
