@@ -1124,36 +1124,6 @@ def get_all_listings():
         if connection:
             connection.close()
 
-# 17. Create New Livestock Listing (Saves full image array and documents array as JSON)
-@app.route("/api/admin/disputes/<int:dispute_id>/status", methods=["PUT", "PATCH", "POST"])
-def update_dispute_status(dispute_id):
-    try:
-        data = request.get_json(silent=True) or {}
-        raw_status = str(data.get("status", "")).strip().lower()
-
-        status_map = {
-            "resolve": "resolved",
-            "resolved": "resolved",
-            "dismiss": "dismissed",
-            "dismissed": "dismissed",
-            "pending": "pending",
-        }
-        new_status = status_map.get(raw_status)
-        if not new_status:
-            return jsonify({"success": False, "message": "Invalid dispute status."}), 400
-
-        # Example using SQLAlchemy or raw cursor—ensure column names match your DB table
-        # e.g. disputes table with primary key id/dispute_id and column `status`
-        ...
-        return jsonify({"success": True, "status": new_status})
-    except Exception as e:
-        try:
-            db.session.rollback()
-        except Exception:
-            pass
-        print("Error updating dispute status:", e)
-        return jsonify({"success": False, "message": str(e)}), 500
-
 # 19. Serve Uploaded Files
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
@@ -1338,29 +1308,50 @@ def update_dispute_status(dispute_id):
     connection = None
     cursor = None
     try:
-        data = request.get_json() or {}
-        new_status = data.get('status')
+        data = request.get_json(silent=True) or {}
+        new_status = str(data.get('status', '')).strip().lower()
+        if new_status not in ('resolved', 'dismissed', 'pending'):
+            return jsonify({'success': False, 'message': 'Invalid dispute status.'}), 400
 
         connection = get_db_connection()
         cursor = connection.cursor()
 
         try:
-            cursor.execute("UPDATE disputes SET status = %s, dispute_status = %s WHERE dispute_id = %s", (new_status, new_status, dispute_id))
+            cursor.execute(
+                "UPDATE disputes SET status = %s, dispute_status = %s WHERE dispute_id = %s",
+                (new_status, new_status, dispute_id)
+            )
         except Exception:
             connection.rollback()
-            cursor.execute("UPDATE disputes SET status = %s WHERE id = %s", (new_status, dispute_id))
+            cursor.execute(
+                "UPDATE disputes SET status = %s WHERE dispute_id = %s",
+                (new_status, dispute_id)
+            )
+
+        if cursor.rowcount == 0:
+            return jsonify({'success': False, 'message': 'Dispute not found.'}), 404
 
         connection.commit()
-        return jsonify({'success': True, 'message': f'Dispute marked as {new_status}.'}), 200
+        return jsonify({'success': True, 'status': new_status, 'message': f'Dispute marked as {new_status}.'}), 200
     except Exception as e:
         if connection:
-            connection.rollback()
+            try:
+                connection.rollback()
+            except Exception:
+                pass
+        print("Error updating dispute status:", e)
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
         if cursor:
-            cursor.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
         if connection:
-            connection.close()
+            try:
+                connection.close()
+            except Exception:
+                pass
 
 # Admin Marketplace Auctions & Reports API
 @app.route('/api/admin/reports', methods=['GET'])
@@ -1886,10 +1877,6 @@ def serve_auth(filename):
 @app.route('/assets/<path:filename>')
 def serve_assets(filename):
     return send_from_directory(os.path.join(app.root_path, 'assets'), filename)
-
-@app.route('/auth/<path:filename>')
-def serve_auth_files(filename):
-    return send_from_directory(os.path.join(app.root_path, 'auth'), filename)
 
 @app.route('/admin/<path:filename>')
 def serve_admin_files(filename):
