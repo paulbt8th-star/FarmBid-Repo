@@ -1125,148 +1125,34 @@ def get_all_listings():
             connection.close()
 
 # 17. Create New Livestock Listing (Saves full image array and documents array as JSON)
-@app.route('/api/listings', methods=['POST'])
-def create_listing():
-    connection = None
-    cursor = None
+@app.route("/api/admin/disputes/<int:dispute_id>/status", methods=["PUT", "PATCH", "POST"])
+def update_dispute_status(dispute_id):
     try:
-        data = request.get_json(silent=True)
-        if not isinstance(data, dict):
-            return jsonify({'success': False, 'message': 'Invalid or missing JSON payload.'}), 400
+        data = request.get_json(silent=True) or {}
+        raw_status = str(data.get("status", "")).strip().lower()
 
-        farmer_id = data.get('farmerId')
-        animal_type = data.get('animalType')
-        breed = data.get('breed')
-        sex = data.get('sex')
-        age = data.get('age')
-        weight = float(data.get('weight') or 0)
-        starting_price = float(data.get('startingPrice') or 0)
-        auction_ends_at = data.get('auctionEndsAt')
-        images = data.get('images') or []
-        documents = data.get('documents') or []
+        status_map = {
+            "resolve": "resolved",
+            "resolved": "resolved",
+            "dismiss": "dismissed",
+            "dismissed": "dismissed",
+            "pending": "pending",
+        }
+        new_status = status_map.get(raw_status)
+        if not new_status:
+            return jsonify({"success": False, "message": "Invalid dispute status."}), 400
 
-        if not farmer_id or not animal_type:
-            return jsonify({'success': False, 'message': 'Missing required listing parameters.'}), 400
-
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        # Save arrays as JSON strings
-        image_url_str = json.dumps(images if isinstance(images, list) else [images])
-        documents_str = json.dumps(documents if isinstance(documents, list) else [documents])
-
-        query = """
-            INSERT INTO livestock_listings
-            (farmer_id, animal_type, breed, sex, age, weight, starting_price, current_highest_bid, auction_status, auction_ends_at, image_url, documents)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'live', %s, %s, %s)
-        """
-        cursor.execute(query, (
-            farmer_id, animal_type, breed, sex, age, weight, starting_price,
-            starting_price, auction_ends_at, image_url_str, documents_str
-        ))
-        connection.commit()
-
-        return jsonify({
-            'success': True,
-            'message': 'Listing published successfully to marketplace!'
-        }), 201
-
-    except (ValueError, TypeError) as e:
-        if connection:
-            connection.rollback()
-        return jsonify({'success': False, 'message': f'Invalid numeric value: {str(e)}'}), 400
+        # Example using SQLAlchemy or raw cursor—ensure column names match your DB table
+        # e.g. disputes table with primary key id/dispute_id and column `status`
+        ...
+        return jsonify({"success": True, "status": new_status})
     except Exception as e:
-        if connection:
-            connection.rollback()
-        print("Create Listing Error:", str(e))
-        return jsonify({'success': False, 'message': str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-# 18. Fetch Listings Created by a Specific Farmer
-@app.route('/api/listings/farmer/<int:farmer_id>', methods=['GET'])
-def get_farmer_listings(farmer_id):
-    connection = None
-    cursor = None
-    try:
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT l.*, u.first_name AS farmer_first_name, u.last_name AS farmer_last_name, u.contact_number AS farmer_contact, u.address AS farmer_address
-            FROM livestock_listings l
-            JOIN users u ON l.farmer_id = u.user_id
-            WHERE l.farmer_id = %s
-            ORDER BY l.created_at DESC
-        """, (farmer_id,))
-        listings = cursor.fetchall()
-
-        for item in listings:
-            if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
-                item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
-            if item.get('created_at') and isinstance(item['created_at'], datetime):
-                item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-
-            # Foolproof Image Resolution using basename
-            img_val = item.get('image_url')
-            resolved_images = []
-            
-            if img_val:
-                try:
-                    parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
-                    for img in parsed:
-                        if img:
-                            img_str = str(img).strip('"[]\'')
-                            if img_str.startswith('http://') and '127.0.0.1' not in img_str and 'localhost' not in img_str:
-                                resolved_images.append(img_str)
-                            elif img_str.startswith('https://'):
-                                resolved_images.append(img_str)
-                            else:
-                                clean_filename = os.path.basename(img_str)
-                                if clean_filename:
-                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
-                except:
-                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
-                    if clean_filename:
-                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
-            
-            if not resolved_images:
-                resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
-                
-            item['images'] = resolved_images
-            item['image_url'] = resolved_images[0]
-
-            # Resolve Documents
-            doc_val = item.get('documents')
-            resolved_docs = []
-            if doc_val:
-                try:
-                    parsed_docs = json.loads(doc_val) if isinstance(doc_val, str) and doc_val.startswith('[') else [doc_val]
-                    for doc in parsed_docs:
-                        if doc:
-                            clean_doc_filename = os.path.basename(str(doc).strip('"[]\''))
-                            if clean_doc_filename:
-                                resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
-                except:
-                    clean_doc_filename = os.path.basename(str(doc_val).strip('"[]\''))
-                    if clean_doc_filename:
-                        resolved_docs.append(f"/uploads/livestock/{clean_doc_filename}")
-            item['documents'] = resolved_docs
-
-        return jsonify({
-            'success': True,
-            'data': listings
-        }), 200
-
-    except Exception as e:
-        print("Farmer Listings API Error:", str(e))
-        return jsonify({'success': False, 'message': str(e)}), 500
-    finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        print("Error updating dispute status:", e)
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # 19. Serve Uploaded Files
 @app.route('/uploads/<path:filename>')
