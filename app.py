@@ -1856,6 +1856,75 @@ def get_bidder_stats(user_id):
         if cursor: cursor.close()
         if connection: connection.close()
 
+@app.route('/api/listings/farmer/<int:farmer_id>', methods=['GET'])
+def get_farmer_listings(farmer_id):
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            sync_expired_auctions(cursor, farmer_id)
+            connection.commit()
+        except Exception:
+            connection.rollback()
+
+        cursor.execute("""
+            SELECT l.*,
+                   u.first_name AS farmer_first_name,
+                   u.last_name AS farmer_last_name,
+                   u.contact_number AS farmer_contact,
+                   u.address AS farmer_address,
+                   (SELECT COUNT(*) FROM bids b WHERE b.listing_id = l.listing_id) AS total_bids
+            FROM livestock_listings l
+            JOIN users u ON l.farmer_id = u.user_id
+            WHERE l.farmer_id = %s
+            ORDER BY l.created_at DESC
+        """, (farmer_id,))
+        listings = cursor.fetchall()
+
+        for item in listings:
+            if item.get('auction_ends_at') and isinstance(item['auction_ends_at'], datetime):
+                item['auction_ends_at'] = item['auction_ends_at'].strftime('%Y-%m-%d %H:%M:%S')
+            if item.get('created_at') and isinstance(item['created_at'], datetime):
+                item['created_at'] = item['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+
+            img_val = item.get('image_url')
+            resolved_images = []
+            if img_val:
+                try:
+                    parsed = json.loads(img_val) if isinstance(img_val, str) and img_val.startswith('[') else [img_val]
+                    for img in parsed:
+                        if img:
+                            img_str = str(img).strip('"[]\'')
+                            if img_str.startswith(('http://', 'https://')) and '127.0.0.1' not in img_str and 'localhost' not in img_str:
+                                resolved_images.append(img_str)
+                            else:
+                                clean_filename = os.path.basename(img_str)
+                                if clean_filename:
+                                    resolved_images.append(f"/uploads/livestock/{clean_filename}")
+                except Exception:
+                    clean_filename = os.path.basename(str(img_val).strip('"[]\''))
+                    if clean_filename:
+                        resolved_images.append(f"/uploads/livestock/{clean_filename}")
+
+            if not resolved_images:
+                resolved_images = ['https://images.unsplash.com/photo-1541781774459-bb2af2f05b55']
+
+            item['images'] = resolved_images
+            item['image_url'] = resolved_images[0]
+
+        return jsonify({'success': True, 'data': listings}), 200
+    except Exception as e:
+        print("Farmer Listings API Error:", str(e))
+        return jsonify({'success': False, 'message': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
 # Admin Settings Xendit Status API
 @app.route('/api/admin/settings/xendit-status', methods=['GET'])
 def get_admin_xendit_status():
