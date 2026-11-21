@@ -177,13 +177,15 @@
 
     // 2. Fetch Real-time Farmer Notifications & Deliveries
     try {
-      const [resQueue, resNotif] = await Promise.all([
+      const [resQueue, resNotif, resFarmerListings] = await Promise.all([
         fetch(`/api/farmer/delivery-queue/${farmerId}`),
-        fetch(`/api/farmer/notifications/${farmerId}`)
+        fetch(`/api/farmer/notifications/${farmerId}`),
+        fetch(`/api/listings/farmer/${farmerId}`)
       ]);
 
       const result = await resQueue.json();
       const notifResult = await resNotif.json();
+      const farmerListingsResult = resFarmerListings.ok ? await resFarmerListings.json() : { success: false, data: [] };
       const isRead = localStorage.getItem('farmbid_farmer_notifications_read') === 'true';
 
       if (resNotif.ok && notifResult.success) {
@@ -208,6 +210,28 @@
       const pendingListings = listings.filter(l => l.auction_status !== 'completed');
       const completedListings = listings.filter(l => l.auction_status === 'completed');
 
+      const allFarmerListings = (farmerListingsResult.success && Array.isArray(farmerListingsResult.data))
+        ? farmerListingsResult.data
+        : [];
+      const nowMs = Date.now();
+      const endedWithoutBidListings = allFarmerListings.filter(l => {
+        if (Number(l.total_bids || 0) > 0) return false;
+        const st = String(l.auction_status || '').toLowerCase();
+        if (st === 'completed') return false;
+        let isExpired = false;
+        if (l.auction_ends_at) {
+          const cleanStr = String(l.auction_ends_at).trim().replace('T', ' ');
+          const [dPart, tPart = '00:00:00'] = cleanStr.split(' ');
+          const [y, m, d] = dPart.split('-').map(Number);
+          const [hh, mm, ss] = tPart.split(':').map(Number);
+          if (y && m && d) {
+            isExpired = new Date(y, m - 1, d, hh || 0, mm || 0, ss || 0).getTime() <= nowMs;
+          }
+        }
+        return ['ended', 'closed'].includes(st) || isExpired;
+      });
+      const endedNoBidCount = endedWithoutBidListings.length;
+
       const wrapper = document.getElementById('properAuctionsWrapper');
       if (!wrapper) return;
 
@@ -219,9 +243,9 @@
             <div style="font-size: 0.78rem; color: #555;">Ready for payment verification</div>
           </div>
           <div style="background: #fff; padding: 18px; border-radius: 12px; border: 1px solid #eaeaea;">
-            <div style="font-size: 0.75rem; font-weight: 700; color: #666; text-transform: uppercase;">Payment Verification</div>
-            <div style="font-size: 1.8rem; font-weight: 800; color: #111; margin: 4px 0;">${pendingListings.length}</div>
-            <div style="font-size: 0.78rem; color: #555;">Awaiting review</div>
+            <div style="font-size: 0.75rem; font-weight: 700; color: #666; text-transform: uppercase;">Ended auction without bid</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #111; margin: 4px 0;">${endedNoBidCount}</div>
+            <div style="font-size: 0.78rem; color: #555;">No bids placed</div>
           </div>
           <div style="background: #fff; padding: 18px; border-radius: 12px; border: 1px solid #eaeaea;">
             <div style="font-size: 0.75rem; font-weight: 700; color: #666; text-transform: uppercase;">Awaiting Delivery</div>
